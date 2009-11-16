@@ -273,7 +273,8 @@
     }
     if (options === undefined) options = {};
     
-    return [options, callback];
+    // don't bother returning the options since they're being modified
+    return callback;
   }
   
   function setLast(method, arg, options, callback) {
@@ -289,7 +290,7 @@
   container[twitter] = {
     // search is an exception case
     search: function (q, options, callback) {
-      [options, callback] = normaliseArgs(options, callback);
+      callback = normaliseArgs(options, callback);
       
       if (options.filter) {
         // remove filter as it conflicts with content
@@ -303,13 +304,13 @@
       return this;
     },
     status: function (user, options, callback) { // alias function
-      [options, callback] = normaliseArgs(options, callback);
+      callback = normaliseArgs(options, callback);
       options.limit = 1;
       setLast('status', user, options, callback); // setting after limit = 1 to keep this intact
       return this.timeline(user, options, callback);
     },
     timeline: function (user, options, callback) {
-      [options, callback] = normaliseArgs(options, callback);
+      callback = normaliseArgs(options, callback);
       setLast('timeline', user, options, callback);
       options.user = user;
       if (callback) load(getUrl('timeline', options), options, callback);
@@ -317,7 +318,7 @@
     },
     list: function (list, options, callback) {
       var parts = list.split('/');
-      [options, callback] = normaliseArgs(options, callback);
+      callback = normaliseArgs(options, callback);
       setLast('list', list, options, callback);
       options.user = parts[0];
       options.list = parts[1];
@@ -325,7 +326,7 @@
       return this;
     },
     favs: function (user, options, callback) {
-      [options, callback] = normaliseArgs(options, callback);
+      callback = normaliseArgs(options, callback);
       setLast('favs', user, options, callback);
       options.user = user;
       if (callback) load(getUrl('favs', options), options, callback);
