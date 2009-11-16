@@ -42,7 +42,7 @@ All API methods are called with:
 ## Example
 
 <pre><code>var count = 0, limit = 5;
-var t = twitter.timeline('rem', { limit: 5 }, function (tweets) {
+var t = twitterlib.timeline('rem', { limit: 5 }, function (tweets) {
   for (var i; i < tweets.length; i++) {
     console.log(this.ify.clean(tweets[i].text));
   });
