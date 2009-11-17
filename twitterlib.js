@@ -9,7 +9,7 @@
         '&quot;': '"',
         '&lt;': '<',
         '&gt;': '>'
-      }
+      },
       URLS = {
         search: 'http://search.twitter.com/search.json?q=%search%&page=%page|1%&rpp=%limit|100%',
         timeline: 'http://twitter.com/statuses/user_timeline/%user%.json?count=%limit|200%&page=%page|1%',
@@ -92,6 +92,13 @@
         }
 
         return mon + ' ' + day + th + (thisyear != year ? ', ' + year : '');
+      },
+      datetime: function (time_value) {
+        var values = time_value.split(" "),
+            parsed_date = Date.parse(values[1] + " " + values[2] + ", " + values[5] + " " + values[3]),
+            date = new Date(parsed_date);
+
+        return this.time(date) + ' ' + this.date(date);
       },
       relative: function (time_value) {
         var values = time_value.split(" "),
@@ -345,14 +352,14 @@
       setLast('list', list, options);
       options.user = parts[0];
       options.list = parts[1];
-      if (callback) load(getUrl('listTimeline', options), options, options.callback);
+      if (options.callback) load(getUrl('listTimeline', options), options, options.callback);
       return this;
     },
     favs: function (user, options, callback) {
       options = normaliseArgs(options, callback);
       setLast('favs', user, options);
       options.user = user;
-      if (callback) load(getUrl('favs', options), options, options.callback);
+      if (options.callback) load(getUrl('favs', options), options, options.callback);
       return this;
     },
     next: function () {
