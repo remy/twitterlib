@@ -239,10 +239,16 @@
     window[twitter + guid] = (function (guid, options) { // args are now private and static
       return function (tweets) {
         // remove original script include
+        var i = 0;
         head.removeChild(doc.getElementById(twitter + guid));
         
         if (tweets.results) {
           tweets = tweets.results;
+          i = tweets.length;
+          // fix the user prop to match "normal" API calls
+          while (i--) {
+            tweets[i].user = { id: tweets[i].from_user_id, screen_name: tweets[i].from_user_id };
+          }
         }
         
         if (options.filter) {
