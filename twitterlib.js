@@ -277,12 +277,12 @@
     return options;
   }
   
-  function setLast(method, arg, options, callback) {
+  function setLast(method, arg, options) {
     last = { 
       method: method,
       arg: arg,
       options: options,
-      callback: callback,
+      callback: options.callback,
       page: options.page || 1
     };
   }
@@ -290,7 +290,7 @@
   container[twitter] = {
     // search is an exception case
     search: function (q, options, callback) {
-      callback = normaliseArgs(options, callback);
+      options = normaliseArgs(options, callback);
       
       if (options.filter) {
         // remove filter as it conflicts with content
@@ -299,37 +299,37 @@
       
       options.search = encodeURIComponent(q);
       
-      setLast('search', q, options, callback);
-      if (callback) load(getUrl('search', options), options, callback);
+      setLast('search', q, options);
+      if (options.callback) load(getUrl('search', options), options, options.callback);
       return this;
     },
     status: function (user, options, callback) { // alias function
-      callback = normaliseArgs(options, callback);
+      options = normaliseArgs(options, callback);
       options.limit = 1;
-      setLast('status', user, options, callback); // setting after limit = 1 to keep this intact
-      return this.timeline(user, options, callback);
+      setLast('status', user, options); // setting after limit = 1 to keep this intact
+      return this.timeline(user, options, options.callback);
     },
     timeline: function (user, options, callback) {
       options = normaliseArgs(options, callback);
-      setLast('timeline', user, options, callback);
+      setLast('timeline', user, options);
       options.user = user;
       if (options.callback) load(getUrl('timeline', options), options, options.callback);
       return this;
     },
     list: function (list, options, callback) {
       var parts = list.split('/');
-      callback = normaliseArgs(options, callback);
-      setLast('list', list, options, callback);
+      options = normaliseArgs(options, callback);
+      setLast('list', list, options);
       options.user = parts[0];
       options.list = parts[1];
-      if (callback) load(getUrl('listTimeline', options), options, callback);
+      if (callback) load(getUrl('listTimeline', options), options, options.callback);
       return this;
     },
     favs: function (user, options, callback) {
-      callback = normaliseArgs(options, callback);
-      setLast('favs', user, options, callback);
+      options = normaliseArgs(options, callback);
+      setLast('favs', user, options);
       options.user = user;
-      if (callback) load(getUrl('favs', options), options, callback);
+      if (callback) load(getUrl('favs', options), options, options.callback);
       return this;
     },
     next: function () {
