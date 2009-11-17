@@ -25,6 +25,7 @@
   }();
   
   var time = function () {
+    var monthDict = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return {
       time: function (date) {
         var hour = date.getHours(),
