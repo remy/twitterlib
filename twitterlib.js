@@ -108,7 +108,7 @@
   }();
   
   var filter = (function () {
-   return {
+    return {
      match: function (tweet, search, includeHighlighted) {
        var i = 0, s = '', text = tweet.text.toLowerCase();
 
@@ -122,6 +122,10 @@
            if (text.indexOf(search['not'][i]) !== -1) {
              return false;
            }
+         }
+         
+         if (!search['and'].length && !search['or'].length) {
+           return true;
          }
        }
 
