@@ -258,7 +258,7 @@
       };
     })(guid, options);
     
-    match = url.match(/callback=(.*?)/);
+    match = url.match(/callback=(.*)/);
     if (match != null && match.length > 1) {
       window[match[1]] = window[twitter + guid];
     } else {
