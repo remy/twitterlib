@@ -227,7 +227,7 @@
       undefined;
   
   function load(url, options, callback) {
-    var script = doc.createElement('script');
+    var script = doc.createElement('script'), match = null;
     if (options == undefined) options = {};
     guid++;
     
@@ -247,7 +247,14 @@
       };
     })(guid, options);
     
-    script.src = url + '&callback=' + twitter + guid;
+    match = url.match(/callback=(.*?)/);
+    if (match != null && match.length > 1) {
+      window[match[1]] = window[twitter + guid];
+    } else {
+      url += '&callback=' + twitter + guid;
+    }
+    
+    script.src = url;
     script.id = twitter + guid;
     head.appendChild(script);
   }
@@ -258,23 +265,16 @@
     });
   }
   
-  function getOptions(o) {
-    var tmp;
-    if (typeof o == 'string') {
-      o = { user: o };
-    }
-    return o;
-  }
-  
   function normaliseArgs(options, callback) {
     if (typeof options == 'function') {
       callback = options;
       options = {};
     }
     if (options === undefined) options = {};
-    
+    options.page = options.page || 1;
+    options.callback = callback;
     // don't bother returning the options since they're being modified
-    return callback;
+    return options;
   }
   
   function setLast(method, arg, options, callback) {
@@ -310,10 +310,10 @@
       return this.timeline(user, options, callback);
     },
     timeline: function (user, options, callback) {
-      callback = normaliseArgs(options, callback);
+      options = normaliseArgs(options, callback);
       setLast('timeline', user, options, callback);
       options.user = user;
-      if (callback) load(getUrl('timeline', options), options, callback);
+      if (options.callback) load(getUrl('timeline', options), options, options.callback);
       return this;
     },
     list: function (list, options, callback) {
@@ -344,6 +344,12 @@
     // appending on pre-existing utilities
     time: time,
     ify: ify,
-    filter: filter
+    filter: filter,
+    debug: function (urls) {
+      for (var url in urls) {
+        URLS[url] = urls[url];
+      }
+      return this;
+    }
   };
 })('twitterlib', this);
