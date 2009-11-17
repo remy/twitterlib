@@ -1,8 +1,30 @@
 // twitterlib.js (c) 2009 Remy Sharp
 // Licensed under the terms of the MIT license.
 (function (twitter, container) {
+  var guid = +new Date,
+      head = document.getElementsByTagName('head')[0],
+      doc = document,
+      last = {}, // memorisation object for the next method
+      ENTITIES = {
+        '&quot;': '"',
+        '&lt;': '<',
+        '&gt;': '>'
+      }
+      URLS = {
+        search: 'http://search.twitter.com/search.json?q=%search%&page=%page|1%&rpp=%limit|100%',
+        timeline: 'http://twitter.com/statuses/user_timeline/%user%.json?count=%limit|200%&page=%page|1%',
+        listTimeline: 'http://api.twitter.com/1/%user%/lists/%list%/statuses.json?page=%page|1%&per_page=%limit|200%',
+        favs: 'http://twitter.com/favorites/%user%.json?page=%page|1%'
+      },
+      undefined;
+  
   var ify = function() {
     return {
+      entities: function (t) {
+        return t.replace(/(&[a-z0-9]+;)/g, function (m) {
+          return ENTITIES[m];
+        });
+      },
       link: function(t) {
         return t.replace(/[a-z]+:\/\/[a-z0-9-_]+\.[a-z0-9-_:~%&\?\/.=]+[^:\.,\)\s*$]/ig, function(m) {
           return '<a href="' + m + '">' + ((m.length > 25) ? m.substr(0, 24) + '...' : m) + '</a>';
@@ -110,127 +132,116 @@
   
   var filter = (function () {
     return {
-     match: function (tweet, search, includeHighlighted) {
-       var i = 0, s = '', text = tweet.text.toLowerCase();
+      match: function (tweet, search, includeHighlighted) {
+        var i = 0, s = '', text = tweet.text.toLowerCase();
 
-       if (typeof search == "string") {
-         search = this.format(search);
-       }
+        if (typeof search == "string") {
+          search = this.format(search);
+        }
 
-       // loop ignore first
-       if (search['not'].length) {
-         for (i = 0; i < search['not'].length; i++) {
-           if (text.indexOf(search['not'][i]) !== -1) {
-             return false;
-           }
-         }
-         
-         if (!search['and'].length && !search['or'].length) {
-           return true;
-         }
-       }
+        // loop ignore first
+        if (search['not'].length) {
+          for (i = 0; i < search['not'].length; i++) {
+            if (text.indexOf(search['not'][i]) !== -1) {
+              return false;
+            }
+          }
 
-       if (search['and'].length) {
-         for (i = 0; i < search['and'].length; i++) {
-           s = search['and'][i];
+          if (!search['and'].length && !search['or'].length) {
+            return true;
+          }
+        }
 
-           if (s.substr(0, 3) === 'to:') {
-             if (!RegExp('^@' + s.substr(3)).test(text)) {
-               return false;
-             }
-           } else if (s.substr(0, 5) == 'from:') {
-             if (tweet.user.screen_name !== s.substr(5)) {
-               return false;
-             }
-           } else if (text.indexOf(s) === -1) {
-             return false;
-           }
-         }
-       }
+        if (search['and'].length) {
+          for (i = 0; i < search['and'].length; i++) {
+            s = search['and'][i];
 
-       if (search['or'].length) {
-         for (i = 0; i < search['or'].length; i++) {
-           s = search['or'][i];
+            if (s.substr(0, 3) === 'to:') {
+              if (!RegExp('^@' + s.substr(3)).test(text)) {
+                return false;
+              }
+            } else if (s.substr(0, 5) == 'from:') {
+              if (tweet.user.screen_name !== s.substr(5)) {
+                return false;
+              }
+            } else if (text.indexOf(s) === -1) {
+              return false;
+            }
+          }
+        }
 
-           if (s.substr(0, 3) === 'to:') {
-             if (RegExp('^@' + s.substr(3)).test(text)) {
-               return true;
-             }
-           } else if (s.substr(0, 5) == 'from:') {
-             if (tweet.user.screen_name === s.substr(5)) {
-               return true;
-             }
-           } else if (text.indexOf(search['or'][i]) !== -1) {
-             return true;
-           }
-         }
-       } else if (search['and'].length) {
-         return true;
-       }
+        if (search['or'].length) {
+          for (i = 0; i < search['or'].length; i++) {
+            s = search['or'][i];
 
-       return false;
-     },
+            if (s.substr(0, 3) === 'to:') {
+              if (RegExp('^@' + s.substr(3)).test(text)) {
+                return true;
+              }
+            } else if (s.substr(0, 5) == 'from:') {
+              if (tweet.user.screen_name === s.substr(5)) {
+                return true;
+              }
+            } else if (text.indexOf(search['or'][i]) !== -1) {
+              return true;
+            }
+          }
+        } else if (search['and'].length) {
+          return true;
+        }
 
-     format: function (search, caseSensitive) {
-       // search can match search.twitter.com format
-       var blocks = [], ors = [], ands = [], i = 0, negative = [], since = '', until = '';
+        return false;
+      },
 
-       search.replace(/(["'](.*?)["']|\S+\b)/g, function (m) {
-         m = m.replace(/^["']+|["']+$/g, '');
-         blocks.push(m);
-       });
+      format: function (search, caseSensitive) {
+        // search can match search.twitter.com format
+        var blocks = [], ors = [], ands = [], i = 0, negative = [], since = '', until = '';
 
-       for (i = 0; i < blocks.length; i++) {
-         if (blocks[i] == 'OR' && blocks[i+1]) {
-           ors.push(blocks[i-1].toLowerCase());
-           ors.push(blocks[i+1].toLowerCase());
-           i++;
-           ands.pop(); // remove the and test from the last loop
-         } else if (blocks[i].substr(0, 1) == '-') {
-           negative.push(blocks[i].substr(1).toLowerCase());
-         } else {
-           ands.push(blocks[i].toLowerCase());
-         }
-       }
+        search.replace(/(["'](.*?)["']|\S+\b)/g, function (m) {
+          m = m.replace(/^["']+|["']+$/g, '');
+          blocks.push(m);
+        });
 
-       return {
-         'or' : ors,
-         'and' : ands,
-         'not' : negative
-       };
-     },
+        for (i = 0; i < blocks.length; i++) {
+          if (blocks[i] == 'OR' && blocks[i+1]) {
+            ors.push(blocks[i-1].toLowerCase());
+            ors.push(blocks[i+1].toLowerCase());
+            i++;
+            ands.pop(); // remove the and test from the last loop
+          } else if (blocks[i].substr(0, 1) == '-') {
+            negative.push(blocks[i].substr(1).toLowerCase());
+          } else {
+            ands.push(blocks[i].toLowerCase());
+          }
+        }
 
-     // tweets typeof Array
-     matchTweets: function (tweets, search, includeHighlighted) {
-       var updated = [], tmp, i = 0;
+        return {
+          'or' : ors,
+          'and' : ands,
+          'not' : negative
+        };
 
-       if (typeof search == 'string') {
-         search = this.format(search);
-       }
+      },
 
-       for (i = 0; i < tweets.length; i++) {
-         if (this.match(tweets[i], search, includeHighlighted)) {
-           updated.push(tweets[i]);
-         }
-       }
+      // tweets typeof Array
+      matchTweets: function (tweets, search, includeHighlighted) {
+        var updated = [], tmp, i = 0;
 
-       return updated;
-     }
-   };
+        if (typeof search == 'string') {
+          search = this.format(search);
+        }
+
+        for (i = 0; i < tweets.length; i++) {
+          if (this.match(tweets[i], search, includeHighlighted)) {
+            updated.push(tweets[i]);
+          }
+        }
+
+        return updated;
+      }
+    };
   })();
     
-  var guid = +new Date,
-      head = document.getElementsByTagName('head')[0],
-      doc = document,
-      last = {}, // memorisation object for the next method
-      URLS = {
-        search: 'http://search.twitter.com/search.json?q=%search%&page=%page|1%&rpp=%limit|100%',
-        timeline: 'http://twitter.com/statuses/user_timeline/%user%.json?count=%limit|200%&page=%page|1%',
-        listTimeline: 'http://api.twitter.com/1/%user%/lists/%list%/statuses.json?page=%page|1%&per_page=%limit|200%',
-        favs: 'http://twitter.com/favorites/%user%.json?page=%page|1%'
-      },
-      undefined;
-  
   function load(url, options, callback) {
     var script = doc.createElement('script'), match = null;
     if (options == undefined) options = {};
@@ -247,7 +258,8 @@
           i = tweets.length;
           // fix the user prop to match "normal" API calls
           while (i--) {
-            tweets[i].user = { id: tweets[i].from_user_id, screen_name: tweets[i].from_user_id };
+            tweets[i].user = { id: tweets[i].from_user_id, screen_name: tweets[i].from_user, profile_image_url: tweets[i].profile_image_url };
+            tweets[i].source = container[twitter].ify.entities(tweets[i].source);
           }
         }
         
