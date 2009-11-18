@@ -11,9 +11,9 @@
         '&gt;': '>'
       },
       URLS = {
-        search: 'http://search.twitter.com/search.json?q=%search%&page=%page|1%&rpp=%limit|100%',
-        timeline: 'http://twitter.com/statuses/user_timeline/%user%.json?count=%limit|200%&page=%page|1%',
-        listTimeline: 'http://api.twitter.com/1/%user%/lists/%list%/statuses.json?page=%page|1%&per_page=%limit|200%',
+        search: 'http://search.twitter.com/search.json?q=%search%&page=%page|1%&rpp=%limit|100%&since_id=%since|1%',
+        timeline: 'http://twitter.com/statuses/user_timeline/%user%.json?count=%limit|200%&page=%page|1%&since_id=%since|1%',
+        listTimeline: 'http://api.twitter.com/1/%user%/lists/%list%/statuses.json?page=%page|1%&per_page=%limit|200%&since_id=%since|1%',
         favs: 'http://twitter.com/favorites/%user%.json?page=%page|1%'
       },
       undefined;
@@ -204,11 +204,11 @@
         // search can match search.twitter.com format
         var blocks = [], ors = [], ands = [], i = 0, negative = [], since = '', until = '';
 
-        search.replace(/(["'](.*?)["']|\S+\b)/g, function (m) {
-          m = m.replace(/^["']+|["']+$/g, '');
+        search.replace(/(-?["'](.*?)["']|\S+\b)/g, function (m) {
+          m = m.replace(/["']+|["']+$/g, '');
           blocks.push(m);
         });
-
+        
         for (i = 0; i < blocks.length; i++) {
           if (blocks[i] == 'OR' && blocks[i+1]) {
             ors.push(blocks[i-1].toLowerCase());
@@ -257,7 +257,7 @@
     window[twitter + guid] = (function (guid, options) { // args are now private and static
       return function (tweets) {
         // remove original script include
-        var i = 0;
+        var i = 0, parts = [];
         head.removeChild(doc.getElementById(twitter + guid));
         
         if (tweets.results) {
@@ -267,6 +267,10 @@
           while (i--) {
             tweets[i].user = { id: tweets[i].from_user_id, screen_name: tweets[i].from_user, profile_image_url: tweets[i].profile_image_url };
             tweets[i].source = container[twitter].ify.entities(tweets[i].source);
+            
+            // fix created_at
+            parts = tweets[i].created_at.split(' ');
+            tweets[i].created_at = [parts[0],parts[2],parts[1],parts[4],parts[5], parts[3]].join(' ').replace(/,/, '');
           }
         }
         
