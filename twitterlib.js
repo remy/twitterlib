@@ -13,9 +13,10 @@
       URLS = {
         search: 'http://search.twitter.com/search.json?q=%search%&page=%page|1%&rpp=%limit|100%&since_id=%since|1%',
         timeline: 'http://twitter.com/statuses/user_timeline/%user%.json?count=%limit|200%&page=%page|1%&since_id=%since|1%',
-        listTimeline: 'http://api.twitter.com/1/%user%/lists/%list%/statuses.json?page=%page|1%&per_page=%limit|200%&since_id=%since|1%',
+        list: 'http://api.twitter.com/1/%user%/lists/%list%/statuses.json?page=%page|1%&per_page=%limit|200%&since_id=%since|1%',
         favs: 'http://twitter.com/favorites/%user%.json?page=%page|1%'
       },
+      urls = URLS, // allows for resetting debugging
       undefined;
   
   var ify = function() {
@@ -294,7 +295,7 @@
   }
   
   function getUrl(type, options) {
-    return URLS[type].replace(/%(.*?)(\|.*?)?%/g, function (a, key, def) {
+    return urls[type].replace(/%(.*?)(\|.*?)?%/g, function (a, key, def) {
       return options[key] === undefined ? def.substr(1) : options[key];
     });
   }
@@ -324,13 +325,7 @@
   container[twitter] = {
     // search is an exception case
     search: function (q, options, callback) {
-      options = normaliseArgs(options, callback);
-      
-      if (options.filter) {
-        // remove filter as it conflicts with content
-        delete options.filter;
-      }
-      
+      options = normaliseArgs(options, callback);      
       options.search = encodeURIComponent(q);
       
       setLast('search', q, options);
@@ -356,7 +351,7 @@
       setLast('list', list, options);
       options.user = parts[0];
       options.list = parts[1];
-      if (options.callback) load(getUrl('listTimeline', options), options, options.callback);
+      if (options.callback) load(getUrl('list', options), options, options.callback);
       return this;
     },
     favs: function (user, options, callback) {
@@ -379,9 +374,13 @@
     time: time,
     ify: ify,
     filter: filter,
-    debug: function (urls) {
-      for (var url in urls) {
-        URLS[url] = urls[url];
+    reset: function () {
+      urls = URLS;
+      last.method = '';
+    },
+    debug: function (data) {
+      for (var url in data) {
+        urls[url] = data[url];
       }
       return this;
     }
