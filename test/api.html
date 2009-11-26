@@ -132,7 +132,7 @@ $('form').onsubmit = function (event) {
     $('#request').innerHTML = '<code>twitterlib.' + method + '(' + term + ', { ' + (options.filter ? 'filter : "' + options.filter + '", ' : '') + (options.page ? 'page: ' + options.page + ', ' : '') + (options.limit ? 'limit: ' + options.limit : '') + '}, callback)';
     var html = [];
     for (var i = 0; i < data.length; i++) {
-      html.push(renderTweet(data[i]));
+      html.push(twitterlib.render(data[i]));
     }
     $('#tweets').innerHTML = html.join('');
   });
@@ -166,25 +166,6 @@ if (Array.prototype.forEach) {
       el.value = v;
     }
   });  
-}
-
-
-// twitter related processing
-function renderTweet(data) {
-  var html = '<li><div class="tweet">';
-  html += '<div class="vcard"><a href="http://twitter.com/' + data.user.screen_name + '" class="url"><img style="height: 48px; width: 48px;" alt="' + data.user.name + '" class="photo fn" height="48" src="' + data.user.profile_image_url + '" width="48" /></a></div>';  
-  html += '<div class="hentry"><strong><a href="http://twitter.com/';
-  html += data.user.screen_name + '" ';
-  html += 'title="' + data.user.name + '">' + data.user.screen_name + '</a></strong> ';
-  html += '<span class="entry-content">';
-  html += twitterlib.ify.clean(data.text);
-  html += '</span> <span class="meta entry-meta"><a href="http://twitter.com/' + data.user.screen_name;
-  html += '/status/' + data.id + '" class="entry-date" rel="bookmark"><span class="published" title="';
-  html += data.created_at + '">' + twitterlib.time.datetime(data.created_at) + '</span></a> <span>from ';
-  html += data.source;
-  html += '</span></span></div></div></li>';
-  
-  return html;
 }
 </script>
 </body>
