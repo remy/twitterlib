@@ -12,7 +12,7 @@ All API methods are called with:
 
 <pre><code>twitterlib[METHOD](subject, options, callback)</code></pre>
 
-*Note that within the callback, <code>this</code> is the twitterlib object allowing you to call utility methods within the callback.*
+Note that the twitterlib library returns itself in all the API methods (and the <code>next</code> method) so you can chain calls.
 
 * favs - favourites for a user
 * list - status for members of list, *subject* is in the format: screen\_name/list\_id
@@ -25,6 +25,24 @@ All API methods are called with:
 * filter - Twitter search filter syntax, e.g. '-RT OR -via', filters against the results
 * limit - numerical, limit the number of results the API returns
 * page - numerical, the page of results
+
+### Callback
+
+The API call with only run if a callback is passed.  Once the API call has finished, it will execute the callback passing in the results from Twitter in an array format.
+
+The context of the callback is set to the twitterlib library (so logging out <code>this</code> will show the <code>twitterlib</code> object).
+
+The second argument to the callback is the options being used on the method call.
+
+<pre><code>twitterlib.timeline('rem', { filter: 'snapbird OR "snap bird"' }, function (tweets, options) {
+  document.querySelector('#tweet').innerHTML = twitterlib.render(tweets[0]);
+  alert('This is page ' + options.page + ', using filter: ' + options.filter);
+  
+  if (options.page == 1) {
+    this.next(); // repeats the call
+  }
+});</code></pre>
+
 
 ## Utility Methods:
 
