@@ -250,6 +250,26 @@
     };
   })();
     
+  // based on twitter.com list of tweets, most common format for tweets
+  function render(tweet) {
+    var html = '<li><div class="tweet">';
+    html += '<div class="vcard"><a href="http://twitter.com/' + tweet.user.screen_name + '" class="url"><img style="height: 48px; width: 48px;" alt="' + tweet.user.name + '" class="photo fn" height="48" src="' + tweet.user.profile_image_url + '" width="48" /></a></div>';  
+    html += '<div class="hentry"><strong><a href="http://twitter.com/';
+    html += tweet.user.screen_name + '" ';
+    html += 'title="' + tweet.user.name + '">' + tweet.user.screen_name + '</a></strong> ';
+    html += '<span class="entry-content">';
+    html += container[twitter].ify.clean(tweet.text);
+    html += '</span> <span class="meta entry-meta"><a href="http://twitter.com/' + tweet.user.screen_name;
+    html += '/status/' + tweet.id + '" class="entry-date" rel="bookmark"><span class="published" title="';
+    html += tweet.created_at + '">' + twitterlib.time.datetime(tweet.created_at) + '</span></a> <span>from ';
+    html += tweet.source;
+    html += '</span></span></div></div></li>';
+
+    return html;
+  }
+
+  
+    
   function load(url, options, callback) {
     var script = doc.createElement('script'), match = null;
     if (options == undefined) options = {};
@@ -378,6 +398,7 @@
       urls = URLS;
       last.method = '';
     },
+    render: render,
     debug: function (data) {
       for (var url in data) {
         urls[url] = data[url];
