@@ -126,7 +126,7 @@ $('form').onsubmit = function (event) {
     twitterlib.reset();
   }
   
-  $('#request').innerHTML = '<code>twitterlib.' + method + '(' + term + ', { ' + (filter ? 'filter : "' + filter + '", ' : '') + (page ? 'page: ' + page + ', ' : '') + (limit ? 'limit: ' + limit : '') + '}, callback)';
+  $('#request').innerHTML = '<code>twitterlib.' + method + '("' + term + '", { ' + (filter ? 'filter : "' + filter + '", ' : '') + (page ? 'page: ' + page + ', ' : '') + (limit ? 'limit: ' + limit : '') + '}, callback)';
   
   twitterlib[method](term, { filter: filter, page: page, limit: limit}, function (data, options) {
     $('#request').innerHTML = '<code>twitterlib.' + method + '(' + term + ', { ' + (options.filter ? 'filter : "' + options.filter + '", ' : '') + (options.page ? 'page: ' + options.page + ', ' : '') + (options.limit ? 'limit: ' + options.limit : '') + '}, callback)';

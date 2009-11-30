@@ -37,7 +37,7 @@
         });
       },
       hash: function(t) {
-        return t.replace(/(^|[^\w'"]+)\#([a-zA-Z0-9_]+)/g, function(m, m1, m2) {
+        return t.replace(/(^|[^&\w'"]+)\#([a-zA-Z0-9_]+)/g, function(m, m1, m2) {
           return m1 + '#<a href="http://search.twitter.com/search?q=%23' + m2 + '">' + m2 + '</a>';
         });
       },
@@ -328,6 +328,9 @@
     if (options === undefined) options = {};
     options.page = options.page || 1;
     options.callback = callback;
+    if (options.limit === 0) {
+      delete options.limit;
+    }
     // don't bother returning the options since they're being modified
     return options;
   }
