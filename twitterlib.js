@@ -317,7 +317,7 @@
   function getUrl(type, options) {
     return urls[type].replace(/(\b.*?)%(.*?)(\|.*?)?%/g, function (a, q, key, def) {
       // remove empty values that shouldn't be sent
-      if (def.substr(1) == 'remove' && typeof options[key] == 'undefined') {
+      if (def && def.substr(1) == 'remove' && typeof options[key] == 'undefined') {
         return '';
       }
       return q + (options[key] === undefined ? def.substr(1) : options[key]);
