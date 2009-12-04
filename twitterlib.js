@@ -11,9 +11,9 @@
         '&gt;': '>'
       },
       URLS = {
-        search: 'http://search.twitter.com/search.json?q=%search%&page=%page|1%&rpp=%limit|100%&since_id=%since|1%',
-        timeline: 'http://twitter.com/statuses/user_timeline/%user%.json?count=%limit|200%&page=%page|1%&since_id=%since|1%',
-        list: 'http://api.twitter.com/1/%user%/lists/%list%/statuses.json?page=%page|1%&per_page=%limit|200%&since_id=%since|1%',
+        search: 'http://search.twitter.com/search.json?q=%search%&page=%page|1%&rpp=%limit|100%&since_id=%since|remove%',
+        timeline: 'http://twitter.com/statuses/user_timeline/%user%.json?count=%limit|200%&page=%page|1%&since_id=%since|remove%',
+        list: 'http://api.twitter.com/1/%user%/lists/%list%/statuses.json?page=%page|1%&per_page=%limit|200%&since_id=%since|remove%',
         favs: 'http://twitter.com/favorites/%user%.json?page=%page|1%'
       },
       urls = URLS, // allows for resetting debugging
@@ -315,8 +315,12 @@
   }
   
   function getUrl(type, options) {
-    return urls[type].replace(/%(.*?)(\|.*?)?%/g, function (a, key, def) {
-      return options[key] === undefined ? def.substr(1) : options[key];
+    return urls[type].replace(/(\b.*?)%(.*?)(\|.*?)?%/g, function (a, q, key, def) {
+      // remove empty values that shouldn't be sent
+      if (def.substr(1) == 'remove' && typeof options[key] == 'undefined') {
+        return '';
+      }
+      return q + (options[key] === undefined ? def.substr(1) : options[key]);
     });
   }
   
