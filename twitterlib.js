@@ -270,7 +270,6 @@
   }
 
   function clean(guid) {
-    console.log(twitter + guid);
     head.removeChild(document.getElementById(twitter + guid));
     delete outstanding[twitter + guid];
     window[twitter + guid] = undefined; 
