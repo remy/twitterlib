@@ -2,9 +2,11 @@
 // Licensed under the terms of the MIT license.
 (function (twitter, container) {
   var guid = +new Date,
+      window = this,
+      document = window.document,
       head = document.getElementsByTagName('head')[0],
-      doc = document,
       last = {}, // memorisation object for the next method
+      outstanding = {}, // reference object to allow us to cancel JSONP calls (though nulling the return function)
       ENTITIES = {
         '&quot;': '"',
         '&lt;': '<',
@@ -96,8 +98,7 @@
       },
       datetime: function (time_value) {
         var values = time_value.split(" "),
-            parsed_date = Date.parse(values[1] + " " + values[2] + ", " + values[5] + " " + values[3]),
-            date = new Date(parsed_date);
+            date = new Date(Date.parse(values[1] + " " + values[2] + ", " + values[5] + " " + values[3]));
 
         return this.time(date) + ' ' + this.date(date);
       },
@@ -268,18 +269,24 @@
     return html;
   }
 
-  
+  function clean(guid) {
+    console.log(twitter + guid);
+    head.removeChild(document.getElementById(twitter + guid));
+    delete outstanding[twitter + guid];
+    window[twitter + guid] = undefined; 
+    try{ delete window[ twitter + guid ]; } catch(e){}
+  }
     
   function load(url, options, callback) {
-    var script = doc.createElement('script'), match = null;
+    var script = document.createElement('script'), match = null;
     if (options == undefined) options = {};
     guid++;
     
+    outstanding[twitter + guid] = true;
     window[twitter + guid] = (function (guid, options) { // args are now private and static
       return function (tweets) {
         // remove original script include
         var i = 0, parts = [];
-        head.removeChild(doc.getElementById(twitter + guid));
         
         if (tweets.results) {
           tweets = tweets.results;
@@ -299,6 +306,8 @@
           tweets = filter.matchTweets(tweets, options.filter);
         }
         callback.call(container[twitter], tweets, options);
+        // clean up
+        clean(guid);
       };
     })(guid, options);
     
@@ -317,7 +326,7 @@
   function getUrl(type, options) {
     return urls[type].replace(/(\b.*?)%(.*?)(\|.*?)?%/g, function (a, q, key, def) {
       // remove empty values that shouldn't be sent
-      if (def && def.substr(1) == 'remove' && typeof options[key] == 'undefined') {
+      if (def && def.substr(1) == 'remove' && options[key] == undefined) {
         return '';
       }
       return q + (options[key] === undefined ? def.substr(1) : options[key]);
@@ -335,7 +344,6 @@
     if (options.limit === 0) {
       delete options.limit;
     }
-    // don't bother returning the options since they're being modified
     return options;
   }
   
@@ -349,28 +357,34 @@
     };
   }
   
+  function custom(name, url, defaults) {
+    if (url && urls[name] == undefined) urls[name] = url;
+    if (this[name] == undefined) {
+      this[name] = function (term, options, callback) {
+        options = normaliseArgs(options, callback);
+        setLast(name, term, options);
+        // slight hack to support my own shortcuts
+        options.user = term; 
+        options.search = encodeURIComponent(term);
+        if (options.callback) load(getUrl(name, options), options, options.callback);
+        return this;
+      };
+    }
+    // makes my code nicer to read when setting up twitterlib object
+    return this == window ? this[name] : this;
+  }
+  
   container[twitter] = {
     // search is an exception case
-    search: function (q, options, callback) {
-      options = normaliseArgs(options, callback);      
-      options.search = encodeURIComponent(q);
-      
-      setLast('search', q, options);
-      if (options.callback) load(getUrl('search', options), options, options.callback);
-      return this;
-    },
+    custom: custom,
+    search: custom('search'),
+    timeline: custom('timeline'),
+    favs: custom('favs'),
     status: function (user, options, callback) { // alias function
       options = normaliseArgs(options, callback);
       options.limit = 1;
       setLast('status', user, options); // setting after limit = 1 to keep this intact
       return this.timeline(user, options, options.callback);
-    },
-    timeline: function (user, options, callback) {
-      options = normaliseArgs(options, callback);
-      setLast('timeline', user, options);
-      options.user = user;
-      if (options.callback) load(getUrl('timeline', options), options, options.callback);
-      return this;
     },
     list: function (list, options, callback) {
       var parts = list.split('/');
@@ -379,13 +393,6 @@
       options.user = parts[0];
       options.list = parts[1];
       if (options.callback) load(getUrl('list', options), options, options.callback);
-      return this;
-    },
-    favs: function (user, options, callback) {
-      options = normaliseArgs(options, callback);
-      setLast('favs', user, options);
-      options.user = user;
-      if (options.callback) load(getUrl('favs', options), options, options.callback);
       return this;
     },
     next: function () {
@@ -401,6 +408,13 @@
     time: time,
     ify: ify,
     filter: filter,
+    cancel: function () {
+      for (var k in outstanding) {
+        window[k] = (function () { return function (guid) { clean(guid); };})(k.replace(twitter, ''));
+      }
+      outstanding = {};
+      return this;
+    },
     reset: function () {
       urls = URLS;
       last.method = '';
@@ -412,5 +426,5 @@
       }
       return this;
     }
-  };
+  };  
 })('twitterlib', this);
