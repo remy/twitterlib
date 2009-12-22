@@ -301,6 +301,7 @@
           }
         }
         
+        options.originalTweets = tweets;
         if (options.filter) {
           tweets = filter.matchTweets(tweets, options.filter);
         }
