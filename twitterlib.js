@@ -207,8 +207,17 @@
         var blocks = [], ors = [], ands = [], i = 0, negative = [], since = '', until = '';
 
         search.replace(/(-?["'](.*?)["']|\S+\b)/g, function (m) {
+          var neg = false;
+          if (m.substr(0, 1) == '-') {
+            neg = true;
+          }
           m = m.replace(/["']+|["']+$/g, '');
-          blocks.push(m);
+          
+          if (neg) {
+            negative.push(m.substr(1).toLowerCase()); 
+          } else {
+            blocks.push(m);            
+          }
         });
         
         for (i = 0; i < blocks.length; i++) {
@@ -217,8 +226,6 @@
             ors.push(blocks[i+1].toLowerCase());
             i++;
             ands.pop(); // remove the and test from the last loop
-          } else if (blocks[i].substr(0, 1) == '-') {
-            negative.push(blocks[i].substr(1).toLowerCase());
           } else {
             ands.push(blocks[i].toLowerCase());
           }
