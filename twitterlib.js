@@ -371,15 +371,12 @@
       };
     }
     // makes my code nicer to read when setting up twitterlib object
-    return this == window ? this[name] : this;
+    return this[name];
   }
   
   container[twitter] = {
     // search is an exception case
     custom: custom,
-    search: custom('search'),
-    timeline: custom('timeline'),
-    favs: custom('favs'),
     status: function (user, options, callback) { // alias function
       options = normaliseArgs(options, callback);
       options.limit = 1;
@@ -426,5 +423,9 @@
       }
       return this;
     }
-  };  
+  };
+  
+  container[twitter].custom('search');
+  container[twitter].custom('timeline');
+  container[twitter].custom('favs');
 })('twitterlib', this);
