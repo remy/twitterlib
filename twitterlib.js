@@ -269,9 +269,9 @@
     html += container[twitter].ify.clean(tweet.text);
     html += '</span> <span class="meta entry-meta"><a href="http://twitter.com/' + tweet.user.screen_name;
     html += '/status/' + tweet.id + '" class="entry-date" rel="bookmark"><span class="published" title="';
-    html += tweet.created_at + '">' + twitterlib.time.datetime(tweet.created_at) + '</span></a> <span>from ';
-    html += tweet.source;
-    html += '</span></span></div></div></li>';
+    html += tweet.created_at + '">' + twitterlib.time.datetime(tweet.created_at) + '</span></a>';
+    if (tweet.source) html += '<span>from ' + tweet.source + '</span>';
+    html += '</span></div></div></li>';
 
     return html;
   }
