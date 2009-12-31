@@ -307,7 +307,7 @@
             tweets[i].created_at = [parts[0],parts[2],parts[1],parts[4],parts[5], parts[3]].join(' ').replace(/,/, '');
           }
         } else if (tweets.length && tweets[0].sender) { // DM - we'll change it to look like a tweet
-          i = tweet.length;
+          i = tweets.length;
           while (i--) {
             tweets[i].user = tweets[i].sender;
             tweets[i].originalText = tweets[i].text;
