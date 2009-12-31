@@ -270,7 +270,7 @@
     html += '</span> <span class="meta entry-meta"><a href="http://twitter.com/' + tweet.user.screen_name;
     html += '/status/' + tweet.id + '" class="entry-date" rel="bookmark"><span class="published" title="';
     html += tweet.created_at + '">' + twitterlib.time.datetime(tweet.created_at) + '</span></a>';
-    if (tweet.source) html += '<span>from ' + tweet.source + '</span>';
+    if (tweet.source) html += ' <span>from ' + tweet.source + '</span>';
     html += '</span></div></div></li>';
 
     return html;
