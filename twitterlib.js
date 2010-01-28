@@ -375,10 +375,19 @@
     if (url && urls[name] == undefined) urls[name] = url;
     if (this[name] == undefined) {
       this[name] = function (term, options, callback) {
+        // handle "termless" custom methods
+        if (typeof term == 'function') {
+          callback = term;
+          term = '';
+        } else if (term.toString() == '[Object object]') {
+          callback = options;
+          options = term;
+          term = '';
+        }
         options = normaliseArgs(options, callback);
         setLast(name, term, options);
         // slight hack to support my own shortcuts
-        options.user = term; 
+        options[name] = options.user = term; 
         options.search = encodeURIComponent(term);
         if (options.callback) load(getUrl(name, options), options, options.callback);
         return this;
