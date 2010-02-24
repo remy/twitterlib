@@ -29,7 +29,7 @@
         });
       },
       link: function(t) {
-        return t.replace(/[a-z]+:\/\/[a-z0-9-_]+\.[a-z0-9-_:~\+%&\?\/.=]+[^:\.,\)\s*$]/ig, function(m) {
+        return t.replace(/[a-z]+:\/\/[a-z0-9-_]+\.[a-z0-9-_:~\+#%&\?\/.=]+[^:\.,\)\s*$]/ig, function(m) {
           return '<a href="' + m + '">' + ((m.length > 25) ? m.substr(0, 24) + '...' : m) + '</a>';
         });
       },
