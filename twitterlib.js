@@ -354,7 +354,7 @@
       clean(guid);
       options.cached = true;
       options.originalTweets = JSON.parse(sessionStorage.getItem(twitterlib + '.page' + options.page + '.originalTweets'));
-      callback.call(console[twitterlib], JSON.parse(sessionStorage.getItem(twitterlib + '.page' + options.page + '.tweets')), options);
+      callback.call(container[twitterlib], JSON.parse(sessionStorage.getItem(twitterlib + '.page' + options.page + '.tweets')), options);
     } 
   }
   
