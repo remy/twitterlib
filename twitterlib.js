@@ -1,6 +1,6 @@
 // twitterlib.js (c) 2009 Remy Sharp
 // Licensed under the terms of the MIT license.
-(function (twitter, container) {
+(function (twitterlib, container) {
   var guid = +new Date,
       window = this,
       document = window.document,
@@ -19,7 +19,8 @@
         favs: 'http://twitter.com/favorites/%user%.json?page=%page|1%'
       },
       urls = URLS, // allows for resetting debugging
-      undefined;
+      undefined,
+      caching = false;
   
   var ify = function() {
     return {
@@ -266,10 +267,10 @@
     html += tweet.user.screen_name + '" ';
     html += 'title="' + tweet.user.name + '">' + tweet.user.screen_name + '</a></strong> ';
     html += '<span class="entry-content">';
-    html += container[twitter].ify.clean(tweet.text);
+    html += container[twitterlib].ify.clean(tweet.text);
     html += '</span> <span class="meta entry-meta"><a href="http://twitter.com/' + tweet.user.screen_name;
     html += '/status/' + tweet.id + '" class="entry-date" rel="bookmark"><span class="published" title="';
-    html += tweet.created_at + '">' + twitterlib.time.datetime(tweet.created_at) + '</span></a>';
+    html += tweet.created_at + '">' + container[twitterlib].time.datetime(tweet.created_at) + '</span></a>';
     if (tweet.source) html += ' <span>from ' + tweet.source + '</span>';
     html += '</span></div></div></li>';
 
@@ -277,10 +278,13 @@
   }
 
   function clean(guid) {
-    head.removeChild(document.getElementById(twitter + guid));
-    delete outstanding[twitter + guid];
-    window[twitter + guid] = undefined; 
-    try{ delete window[ twitter + guid ]; } catch(e){}
+    var el = document.getElementById(twitterlib + guid);
+    if (el) {
+      head.removeChild(document.getElementById(twitterlib + guid));
+    }
+    delete outstanding[twitterlib + guid];
+    window[twitterlib + guid] = undefined; 
+    try{ delete window[ twitterlib + guid ]; } catch(e){}
   }
     
   function load(url, options, callback) {
@@ -288,8 +292,8 @@
     if (options == undefined) options = {};
     guid++;
     
-    outstanding[twitter + guid] = true;
-    window[twitter + guid] = (function (guid, options) { // args are now private and static
+    outstanding[twitterlib + guid] = true;
+    window[twitterlib + guid] = (function (guid, options) { // args are now private and static
       return function (tweets) {
         // remove original script include
         var i = 0, parts = [];
@@ -300,7 +304,7 @@
           // fix the user prop to match "normal" API calls
           while (i--) {
             tweets[i].user = { id: tweets[i].from_user_id, screen_name: tweets[i].from_user, profile_image_url: tweets[i].profile_image_url };
-            tweets[i].source = container[twitter].ify.entities(tweets[i].source);
+            tweets[i].source = container[twitterlib].ify.entities(tweets[i].source);
             
             // fix created_at
             parts = tweets[i].created_at.split(' ');
@@ -319,7 +323,16 @@
         if (options.filter) {
           tweets = filter.matchTweets(tweets, options.filter);
         }
-        callback.call(container[twitter], tweets, options);
+        
+        if (caching && options.page > 1) {
+          sessionStorage.setItem(twitterlib + '.page' + options.page, 'true');
+          sessionStorage.setItem(twitterlib + '.page' + options.page + '.tweets', JSON.stringify(tweets));
+          sessionStorage.setItem(twitterlib + '.page' + options.page + '.originalTweets', JSON.stringify(options.originalTweets));
+        }
+        
+        options.cached = false;
+        
+        callback.call(container[twitterlib], tweets, options);
         // clean up
         clean(guid);
       };
@@ -327,14 +340,22 @@
     
     match = url.match(/callback=(.*)/);
     if (match != null && match.length > 1) {
-      window[match[1]] = window[twitter + guid];
+      window[match[1]] = window[twitterlib + guid];
     } else {
-      url += '&callback=' + twitter + guid;
+      url += '&callback=' + twitterlib + guid;
     }
-    
-    script.src = url;
-    script.id = twitter + guid;
-    head.appendChild(script);
+
+    // all first requests go via live
+    if (!caching || options.page <= 1 || (caching && sessionStorage.getItem(twitterlib + '.page' + options.page) == null)) {
+      script.src = url;
+      script.id = twitterlib + guid;
+      head.appendChild(script);      
+    } else if (caching) {
+      clean(guid);
+      options.cached = true;
+      options.originalTweets = JSON.parse(sessionStorage.getItem(twitterlib + '.page' + options.page + '.originalTweets'));
+      callback.call(console[twitterlib], JSON.parse(sessionStorage.getItem(twitterlib + '.page' + options.page + '.tweets')), options);
+    } 
   }
   
   function getUrl(type, options) {
@@ -369,6 +390,23 @@
       callback: options.callback,
       page: options.page || 1
     };
+    
+    if (caching) {
+      var last_request = JSON.parse(sessionStorage.getItem(twitterlib + '.last_request') || '{}');
+      if (last.method != last_request.method || last.arg != last_request.arg) {
+        clearCache();
+        sessionStorage.setItem(twitterlib + '.last_request', JSON.stringify(last));
+      } 
+    }
+  }
+  
+  function clearCache() {
+    var i = sessionStorage.length;
+    while (i--) {
+      if (sessionStorage.key(i).substr(0, twitterlib.length) == twitterlib) {
+        sessionStorage.removeItem(sessionStorage.key(i));
+      }
+    }
   }
   
   function custom(name, url, defaults) {
@@ -397,7 +435,7 @@
     return this[name];
   }
   
-  container[twitter] = {
+  container[twitterlib] = {
     // search is an exception case
     custom: custom,
     status: function (user, options, callback) { // alias function
@@ -430,7 +468,7 @@
     filter: filter,
     cancel: function () {
       for (var k in outstanding) {
-        window[k] = (function () { return function (guid) { clean(guid); };})(k.replace(twitter, ''));
+        window[k] = (function () { return function (guid) { clean(guid); };})(k.replace(twitterlib, ''));
       }
       outstanding = {};
       return this;
@@ -445,10 +483,18 @@
         urls[url] = data[url];
       }
       return this;
+    },
+    cache: function (enabled) {
+      caching = enabled == undefined ? true : enabled;
+      
+      // cache is only supported if you have native json encoding
+      if (!window.JSON || !window.sessionStorage) {
+        caching = false;
+      }
     }
   };
   
-  container[twitter].custom('search');
-  container[twitter].custom('timeline');
-  container[twitter].custom('favs');
+  container[twitterlib].custom('search');
+  container[twitterlib].custom('timeline');
+  container[twitterlib].custom('favs');
 })('twitterlib', this);
