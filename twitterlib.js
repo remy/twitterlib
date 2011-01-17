@@ -269,7 +269,7 @@
     html += '<span class="entry-content">';
     html += container[twitterlib].ify.clean(tweet.text);
     html += '</span> <span class="meta entry-meta"><a href="http://twitter.com/' + tweet.user.screen_name;
-    html += '/status/' + tweet.id + '" class="entry-date" rel="bookmark"><span class="published" title="';
+    html += '/status/' + tweet.id_str + '" class="entry-date" rel="bookmark"><span class="published" title="';
     html += tweet.created_at + '">' + container[twitterlib].time.datetime(tweet.created_at) + '</span></a>';
     if (tweet.source) html += ' <span>from ' + tweet.source + '</span>';
     html += '</span></div></div></li>';
@@ -324,6 +324,11 @@
           tweets = filter.matchTweets(tweets, options.filter);
         }
         
+        if (options.limit && options.limit < tweets.length) {
+          // chop
+          tweets = tweets.splice(0, options.limit);
+        }
+        
         if (caching && options.page > 1) {
           sessionStorage.setItem(twitterlib + '.page' + options.page, 'true');
           sessionStorage.setItem(twitterlib + '.page' + options.page + '.tweets', JSON.stringify(tweets));
@@ -353,8 +358,20 @@
     } else if (caching) {
       clean(guid);
       options.cached = true;
+      
       options.originalTweets = JSON.parse(sessionStorage.getItem(twitterlib + '.page' + options.page + '.originalTweets'));
-      callback.call(container[twitterlib], JSON.parse(sessionStorage.getItem(twitterlib + '.page' + options.page + '.tweets')), options);
+      // reset the tweets - so we can cache but refilter
+      var tweets = JSON.parse(sessionStorage.getItem(twitterlib + '.page' + options.page + '.tweets') || '[]');
+      if (options.filter) {
+        tweets = filter.matchTweets(tweets, options.filter);
+      }
+
+      if (options.limit && options.limit < tweets.length) {
+        // chop
+        tweets = tweets.splice(0, options.limit);
+      }
+
+      callback.call(container[twitterlib], tweets, options);
     } 
   }
   
