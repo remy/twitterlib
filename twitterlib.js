@@ -207,7 +207,7 @@
         // search can match search.twitter.com format
         var blocks = [], ors = [], ands = [], i = 0, negative = [], since = '', until = '';
 
-        search.replace(/(-?["'](.*?)["']|\S+\b)/g, function (m) {
+        search.replace(/(-?["'](.*?)["']|\S+)/g, function (m) { // removed \b for chinese character support
           var neg = false;
           if (m.substr(0, 1) == '-') {
             neg = true;
