@@ -9,7 +9,7 @@ input { padding: 2px; }
 label { float: left; display: block; width: 100px; padding-top: 6px; }
 fieldset { border: 2px solid #ccc; }
 legend { color: #aaa; font-size: 14px; }
-.configuration, .results { float: left; width: 48%; margin-right: 10px; }
+.results { float: left; width: 48%; margin-right: 10px; }
 .execute { margin: 10px 0; text-align: right; }
 input.debug { width: 300px; }
 
@@ -28,9 +28,29 @@ input.debug { width: 300px; }
 #tweets a { color: #00f; }
 .hentry .meta, #tweets .meta a { color: #999; }
 
+#request code {
+  display: block;
+  background: #333;
+  color: #fff;
+  border-radius: 5px;
+  padding: 10px;
+}
+
+#requestSettings {
+  position: fixed;
+  width: 48%;
+  top: 0;
+  left: 10px;
+}
+
+.results {
+  margin-top: 62px;
+  margin-left: 50%;
+}
 </style>
 </head>
 <body>
+<div id="requestSettings">
 <h1>Twitterlib API test tool</h1>
 <div class="configuration">
   <form action="">
@@ -65,6 +85,10 @@ input.debug { width: 300px; }
         <label for="limit">limit</label>
         <input type="text" value="" id="limit" />
       </div>
+      <div>
+        <label for="rts">Include Retweets?</label>
+        <input type="checkbox" value="true" id="include_rts">
+      </div>
     </fieldset>
     <div class="execute"><input type="submit" value="execute &rarr;" /> <input type="button" class="next" value="next &rArr;" /></div>
     <fieldset>
@@ -85,29 +109,31 @@ input.debug { width: 300px; }
     <div class="execute"><input type="submit" value="execute &rarr;" /> <input type="button" class="next" value="next &rArr;" /></div>
   </form>
 </div>
+</div>
 <div class="results">
   <p id="request"></p>
   <ul id="tweets"></ul>
 </div>
 <script src="../twitterlib.js"></script>
 <script>
+twitterlib.cache();
 function $(s) {
   return document.querySelector(s);
 }
 
 function $$(s) {
-  var all = document.querySelectorAll(s);
-  return Array.prototype.slice.call(all, 0, all.length);
+  return [].slice.call(document.querySelectorAll(s));
 }
 
 $('form').onsubmit = function (event) {
   event.preventDefault();
   
-  var method = $('select[id=method]').value,
-      term = $('input[id=term]').value,
-      filter = $('input[id=filter]').value,
-      page = $('input[id=page]').value || 1,
-      limit = $('input[id=limit]').value || 0,
+  var method = $('#method').value,
+      term = $('#term').value,
+      filter = $('#filter').value,
+      page = $('#page').value || null,
+      limit = $('#limit').value || null,
+      rts = !!($('#include_rts').checked) || null,
       debug = {},
       useDebug = false;
   
@@ -117,19 +143,59 @@ $('form').onsubmit = function (event) {
       type = el.id.replace(/^debug-/, '');
       useDebug = true;
       debug[type] = el.value;
-    }
+    } 
   });
+  
+  twitterlib.reset();
   
   if (useDebug) {
     twitterlib.debug(debug);
-  } else {
-    twitterlib.reset();
+  } 
+  
+  var opt = {};
+  if (filter) {
+    opt.filter = filter;
   }
   
-  $('#request').innerHTML = '<code>twitterlib.' + method + '("' + term + '", { ' + (filter ? 'filter : "' + filter + '", ' : '') + (page ? 'page: ' + page + ', ' : '') + (limit ? 'limit: ' + limit : '') + '}, callback)';
+  if (page !== null) {
+    opt.page = page;
+  }
   
-  twitterlib[method](term, { filter: filter, page: page, limit: limit}, function (data, options) {
-    $('#request').innerHTML = '<code>twitterlib.' + method + '(' + term + ', { ' + (options.filter ? 'filter : "' + options.filter + '", ' : '') + (options.page ? 'page: ' + options.page + ', ' : '') + (options.limit ? 'limit: ' + options.limit : '') + '}, callback)';
+  if (limit !== null) {
+    opt.limit = limit;
+  }
+
+  if (rts !== null) {
+    opt.rts = true;
+  }
+
+  twitterlib[method](term, opt, function (data, options) {
+    var html = '<code>twitterlib.' + method + '("' + term + '"';
+    
+    var optionText = [];
+    if (options.filter) {
+      optionText.push('filter: "' + options.filter + '"');
+    }
+    
+    if (options.page) {
+      optionText.push('page: ' + options.page);
+    }
+    
+    if (options.limit) {
+      optionText.push('limit: ' + options.limit);
+    }
+    console.log(options);
+    if (options.rts) {
+      optionText.push('rts: ' + options.rts);
+    }
+    
+    if (optionText.length) {
+      optionText[0] = ', { ' + optionText[0];
+      optionText[optionText.length - 1] += ' }';
+    }
+    
+    $('#request').innerHTML = html + optionText.join(', ') + ', callback);</code>';
+
     var html = [];
     for (var i = 0; i < data.length; i++) {
       html.push(twitterlib.render(data[i]));
@@ -152,9 +218,10 @@ $$('input.next').forEach(function (el) {
 if (window.localStorage && Array.prototype.forEach) {
   window.onunload = function () {
     $$('input[type=text], select').forEach(function (el) {
-      if (el.value) {
-        localStorage.setItem(el.id, el.value);        
-      }
+      localStorage.setItem(el.id, el.value);      
+    });
+    $$('input[type=checkbox]').forEach(function (el) {
+      localStorage.setItem(el.id, el.checked);
     });
   };
 }
@@ -165,6 +232,10 @@ if (Array.prototype.forEach) {
     if (v != null) {
       el.value = v;
     }
+  });  
+  $$('input[type=checkbox]').forEach(function (el) {
+    var v = localStorage.getItem(el.id);
+    el.checked = v == 'true' ? true : false;
   });  
 }
 </script>

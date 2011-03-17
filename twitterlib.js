@@ -1,4 +1,4 @@
-// twitterlib.js (c) 2009 Remy Sharp
+// twitterlib.js (c) 2011 Remy Sharp
 // Licensed under the terms of the MIT license.
 (function (twitterlib, container) {
   var guid = +new Date,
@@ -272,6 +272,7 @@
     html += '/status/' + tweet.id_str + '" class="entry-date" rel="bookmark"><span class="published" title="';
     html += tweet.created_at + '">' + container[twitterlib].time.datetime(tweet.created_at) + '</span></a>';
     if (tweet.source) html += ' <span>from ' + tweet.source + '</span>';
+    if (tweet.retweetedby) html += ' <span>retweeted by ' + tweet.retweetedby.screen_name + '</span>';
     html += '</span></div></div></li>';
 
     return html;
@@ -301,6 +302,7 @@
         if (tweets.results) {
           tweets = tweets.results;
           i = tweets.length;
+
           // fix the user prop to match "normal" API calls
           while (i--) {
             tweets[i].user = { id: tweets[i].from_user_id, screen_name: tweets[i].from_user, profile_image_url: tweets[i].profile_image_url };
@@ -317,6 +319,16 @@
             tweets[i].originalText = tweets[i].text;
             tweets[i].text = '@' + tweets[i].recipient_screen_name + ' ' + tweets[i].text;
           }
+        } else if (options.rts == true || options.rts == 't' || options.rts == 1) {
+          // scan for native retweets and swap them in as real tweets
+          i = tweets.length;
+          while (i--) {
+            if (tweets[i].retweeted_status) {
+                tweets[i].retweeted_status.retweetedby = tweets[i].user;
+              tweets[i] = tweets[i].retweeted_status;
+            }
+          }
+          
         }
         
         options.originalTweets = tweets;
