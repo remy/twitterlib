@@ -14,9 +14,9 @@
       },
       URLS = {
         search: 'http://search.twitter.com/search.json?q=%search%&page=%page|1%&rpp=%limit|100%&since_id=%since|remove%',
-        timeline: 'http://twitter.com/statuses/user_timeline/%user%.json?count=%limit|200%&page=%page|1%&since_id=%since|remove%',
+        timeline: 'http://api.twitter.com/1/statuses/user_timeline.json?screen_name=%user%&count=%limit|200%&page=%page|1%&since_id=%since|remove%include_rts=%rts|false%',
         list: 'http://api.twitter.com/1/%user%/lists/%list%/statuses.json?page=%page|1%&per_page=%limit|200%&since_id=%since|remove%',
-        favs: 'http://twitter.com/favorites/%user%.json?page=%page|1%'
+        favs: 'http://api.twitter.com/1/favorites/%user%.json?page=%page|1%'
       },
       urls = URLS, // allows for resetting debugging
       undefined,
