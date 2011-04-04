@@ -343,9 +343,9 @@
         
         if (caching && options.page > 1) {
           try {
-            sessionStorage.setItem(twitterlib + '.page' + options.page, 'true');
             sessionStorage.setItem(twitterlib + '.page' + options.page + '.tweets', JSON.stringify(tweets));
             sessionStorage.setItem(twitterlib + '.page' + options.page + '.originalTweets', JSON.stringify(options.originalTweets));            
+            sessionStorage.setItem(twitterlib + '.page' + options.page, 'true');
           } catch (e) {
             // possible QUOTA EXCEEDED
           }
