@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Simple timeline test</title>
+</head>
+<body>
+<h1>Twitterlib.js timeline test</h1>
+<pre><code>var count = 0, limit = 2;
+twitterlib.timeline('rem', { limit: 5 }, function (tweets) {
+  count++;
+  log('&lt;strong&gt;Tweets requested in hit ' + count + '&lt;/strong&gt;');
+  for (var i = 0; i &lt; tweets.length; i++) {
+    log(this.ify.clean(tweets[i].text));
+  }
+
+  if (count &lt; limit) {
+    this.next();
+  }
+});</code></pre>
+<div id="debug"></div>
+<script src="../twitterlib.js"></script>
+<script>
+function log(s) {
+  document.getElementById('debug').innerHTML += '<p>' + s + '</p>';
+}
+
+var count = 0, limit = 2;
+twitterlib.timeline('rem', { limit: 5 }, function (tweets) {
+  count++;
+  log('<strong>Tweets requested in hit ' + count + '</strong>');
+  for (var i = 0; i < tweets.length; i++) {
+    log(this.ify.clean(tweets[i].text));
+  }
+
+  if (count < limit) {
+    this.next();
+  }
+});
+
+</script>
+</body>
+</html>

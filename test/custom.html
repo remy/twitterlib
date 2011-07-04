@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset=utf-8 />
+<title>Twitter Reply Chain</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+}
+
+section, article, aside, header, footer {
+  display: block;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #b0d349;
+  font-family: helvetica, arial;
+  font-size: 18px;
+}
+ 
+#tweets {
+  width: 758px;
+  margin: 0 auto;
+  background: #fff;
+  padding-bottom: 22px;
+  padding-left: 22px;
+  -webkit-border-bottom-left-radius: 15px;
+  -webkit-border-bottom-right-radius: 15px;
+  -moz-border-radius-bottomleft: 15px;
+  -moz-border-radius-bottomright: 15px;
+  position: relative;
+}
+
+#tweets ul {
+  width: 520px;
+  margin: 0;
+}
+
+/* twitter styles */
+#tweets li {
+  background: url(/images/dots.gif) repeat-x left bottom;
+  font-size: 14px;
+}
+
+#tweets a {
+  color: #2277bb;
+}
+
+#tweets a:hover, #tweets a:active, #tweets a:focus, #tweets a {
+  text-decoration: none;
+}
+
+#tweets a:hover {
+  text-decoration: underline;
+}
+
+#tweets a img {
+  border: 0;
+}
+
+#tweets li {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.tweet {
+  clear: left;
+  min-height: 48px;
+  padding: 9px;
+  line-height: 1.1;
+  position: relative;
+}
+
+#tweets li.searchterm {
+  font-size: 22px;
+  padding: 20px 0;
+}
+
+.vcard {
+  float: left;
+}
+
+.hentry {
+  margin-left: 58px;
+}
+
+.hentry .meta {
+  color: #999;
+  font-size: 0.764em;
+  margin: 3px 0 0;
+  display: block;
+}
+
+#tweets .meta a {
+  color: #999;
+}
+
+.tweet:hover {
+  background-color: #F7F7F7;
+}
+
+#status {
+  font-size: 14px;
+  color: #565d42;
+}
+
+#status p {
+  margin: 5px 0 15px 0;
+}
+
+#status p strong {
+/*  display: block;*/
+}
+</style>
+<script src="../twitterlib.js"></script>
+</head>
+<body>
+<ul id="tweets"></ul>
+<script>
+function getQuery(s) {
+  var query = {};
+  
+  s.replace(/\b([^&=]*)=([^&=]*)\b/g, function (m, a, d) {
+    if (typeof query[a] != 'undefined') {
+      query[a] += ',' + d;
+    } else {
+      query[a] = d;
+    }
+  });
+  
+  return query;
+}
+
+var query = getQuery(window.location.search);
+var tweets = document.getElementById('tweets');
+var r = twitterlib.custom('show', 'http://twitter.com/statuses/show/%single%.json?');
+console.log(r);
+twitterlib.show(8212341382, function (data) {
+console.log(data);
+  tweets.innerHTML += twitterlib.render(data);
+  if (data.in_reply_to_status_id) {
+    twitterlib.single(data.in_reply_to_status_id, arguments.callee);
+  }
+});
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
