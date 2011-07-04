@@ -57,21 +57,21 @@
       // replace urls with expanded urls and let the ify shorten the link
       if (tweet.entities.urls && tweet.entities.urls.length) {
         for (i = 0; i < tweet.entities.urls.length; i++) {
-          text = text.replace(tweet.entities.urls[i].url, tweet.entities.urls[i].expanded_url); // /g ?
+          if (tweet.entities.urls[i].expanded_url) text = text.replace(tweet.entities.urls[i].url, tweet.entities.urls[i].expanded_url); // /g ?
         }
       }
       
       // replace media with url to actual image (or thing?)
       if (tweet.entities.media && tweet.entities.media.length) {
         for (i = 0; i < tweet.entities.media.length; i++) {
-          text = text.replace(tweet.entities.media[i].url, tweet.entities.media[i].media_url ? tweet.entities.media[i].media_url : tweet.entities.media[i].expanded_url); // /g ?
+          if (tweet.entities.media[i].media_url || tweet.entities.media[i].expanded_url) text = text.replace(tweet.entities.media[i].url, tweet.entities.media[i].media_url ? tweet.entities.media[i].media_url : tweet.entities.media[i].expanded_url); // /g ?
         }
       }
 
     }
     
     return text;
-  }
+  };
   
   var time = function () {
     var monthDict = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
