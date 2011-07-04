@@ -46,13 +46,14 @@ The second argument to the callback is the options being used on the method call
 
 ## Utility Methods:
 
-* debug - see debugging section
+* refresh - re-executes the last twitterlib request - useful for updating a static block of tweets
+* next - executes the last method called incrementing the page number and firing the same callback
 * filter - stand alone filter based on Twitter's search filter syntax
 * ify - object to linkify and "at"ify tweets, example usage below
-* next - executes the last method called incrementing the page number and firing the same callback
 * render - returns HTML &lt;li&gt; markup in a common format based on twitter.com's list of tweets
 * reset - removes the next method, and removes all debug settings
 * time - to access relative help formatting the twitter time to a relative time
+* debug - see debugging section
 
 ## Example
 
