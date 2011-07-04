@@ -4,7 +4,7 @@
   var guid = +new Date,
       window = this,
       document = window.document,
-      head = document.getElementsByTagName('head')[0],
+      head = document.head || document.getElementsByTagName('head')[0],
       last = {}, // memorisation object for the next method
       outstanding = {}, // reference object to allow us to cancel JSONP calls (though nulling the return function)
       ENTITIES = {
@@ -13,10 +13,10 @@
         '&gt;': '>'
       },
       URLS = {
-        search: 'http://search.twitter.com/search.json?q=%search%&page=%page|1%&rpp=%limit|100%&since_id=%since|remove%',
-        timeline: 'http://api.twitter.com/1/statuses/user_timeline.json?screen_name=%user%&count=%limit|200%&page=%page|1%&since_id=%since|remove%include_rts=%rts|false%',
-        list: 'http://api.twitter.com/1/%user%/lists/%list%/statuses.json?page=%page|1%&per_page=%limit|200%&since_id=%since|remove%',
-        favs: 'http://api.twitter.com/1/favorites/%user%.json?page=%page|1%'
+        search: 'http://search.twitter.com/search.json?q=%search%&page=%page|1%&rpp=%limit|100%&since_id=%since|remove%&result_type=recent', // TODO allow user to change result_type
+        timeline: 'http://api.twitter.com/1/statuses/user_timeline.json?screen_name=%user%&count=%limit|200%&page=%page|1%&since_id=%since|remove%include_rts=%rts|false%&include_entities=true',
+        list: 'http://api.twitter.com/1/%user%/lists/%list%/statuses.json?page=%page|1%&per_page=%limit|200%&since_id=%since|remove%&include_entities=true',
+        favs: 'http://api.twitter.com/1/favorites/%user%.json?page=%page|1%include_entities=true&skip_status=true'
       },
       urls = URLS, // allows for resetting debugging
       undefined,
@@ -30,8 +30,8 @@
         });
       },
       link: function(t) {
-        return t.replace(/[a-z]+:\/\/[a-z0-9-_]+\.[a-z0-9-_:~\+#%&\?\/.=]+[^:\.,\)\s*$]/ig, function(m) {
-          return '<a href="' + m + '">' + ((m.length > 25) ? m.substr(0, 24) + '...' : m) + '</a>';
+        return t.replace(/[a-z]+:\/\/([a-z0-9-_]+\.[a-z0-9-_:~\+#%&\?\/.=]+[^:\.,\)\s*$])/ig, function(m, link) {
+          return '<a title="' + m + '" href="' + m + '">' + ((link.length > 36) ? link.substr(0, 35) + '&hellip;' : link) + '</a>';
         });
       },
       at: function(t) {
@@ -49,6 +49,29 @@
       }
     };
   }();
+  
+  var expandLinks = function (tweet) {
+    var text = tweet.text,
+        i = 0;
+    if (tweet.entities) {
+      // replace urls with expanded urls and let the ify shorten the link
+      if (tweet.entities.urls && tweet.entities.urls.length) {
+        for (i = 0; i < tweet.entities.urls.length; i++) {
+          text = text.replace(tweet.entities.urls[i].url, tweet.entities.urls[i].expanded_url); // /g ?
+        }
+      }
+      
+      // replace media with url to actual image (or thing?)
+      if (tweet.entities.media && tweet.entities.media.length) {
+        for (i = 0; i < tweet.entities.media.length; i++) {
+          text = text.replace(tweet.entities.media[i].url, tweet.entities.media[i].media_url ? tweet.entities.media[i].media_url : tweet.entities.media[i].expanded_url); // /g ?
+        }
+      }
+
+    }
+    
+    return text;
+  }
   
   var time = function () {
     var monthDict = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -74,8 +97,7 @@
         return hour + ':' + min + ' ' + ampm;
       },
       date: function (date) {
-        var ds = date.toDateString().split(/ /),
-            mon = monthDict[date.getMonth()],
+        var mon = monthDict[date.getMonth()],
             day = date.getDate()+'',
             dayi = ~~(day),
             year = date.getFullYear(),
@@ -97,6 +119,21 @@
 
         return mon + ' ' + day + th + (thisyear != year ? ', ' + year : '');
       },
+      shortdate: function (time_value) {
+        var values = time_value.split(" "),
+            parsed_date = Date.parse(values[1] + " " + values[2] + ", " + values[5] + " " + values[3]),
+            date = new Date(parsed_date),
+            mon = monthDict[date.getMonth()],
+            day = date.getDate()+'',
+            year = date.getFullYear(),
+            thisyear = (new Date()).getFullYear();
+
+        if (thisyear === year) {
+          return day + ' ' + mon;
+        } else {
+          return day + ' ' + mon + (year+'').substr(2, 2);
+        }
+      },
       datetime: function (time_value) {
         var values = time_value.split(" "),
             date = new Date(Date.parse(values[1] + " " + values[2] + ", " + values[5] + " " + values[3]));
@@ -113,26 +150,20 @@
 
         delta = delta + (relative_to.getTimezoneOffset() * 60);
 
-        if (delta < 5) {
-          r = 'less than 5 seconds ago';
-        } else if (delta < 30) {
-          r = 'half a minute ago';
+        if (delta <= 1) {
+          r = '1 second ago';
         } else if (delta < 60) {
-          r = 'less than a minute ago';
+          r = delta + ' seconds ago';
         } else if (delta < 120) {
           r = '1 minute ago';
         } else if (delta < (45*60)) {
-          r = (~~(delta / 60)).toString() + ' minutes ago';
+          r = (~~(delta / 60)) + ' minutes ago';
         } else if (delta < (2*90*60)) { // 2* because sometimes read 1 hours ago
-          r = 'about 1 hour ago';
+          r = '1 hour ago';
         } else if (delta < (24*60*60)) {
-          r = 'about ' + (~~(delta / 3600)).toString() + ' hours ago';
+          r = (~~(delta / 3600)) + ' hours ago';
         } else {
-          if (delta < (48*60*60)) {
-            r = this.time(date) + ' yesterday';
-          } else {
-            r = this.time(date) + ' ' + this.date(date);
-          }
+          r = this.shortdate(time_value);
         }
 
         return r;
@@ -267,10 +298,10 @@
     html += tweet.user.screen_name + '" ';
     html += 'title="' + tweet.user.name + '">' + tweet.user.screen_name + '</a></strong> ';
     html += '<span class="entry-content">';
-    html += container[twitterlib].ify.clean(tweet.text);
+    html += container[twitterlib].ify.clean(container[twitterlib].expandLinks(tweet));
     html += '</span> <span class="meta entry-meta"><a href="http://twitter.com/' + tweet.user.screen_name;
     html += '/status/' + tweet.id_str + '" class="entry-date" rel="bookmark"><span class="published" title="';
-    html += tweet.created_at + '">' + container[twitterlib].time.datetime(tweet.created_at) + '</span></a>';
+    html += container[twitterlib].time.datetime(tweet.created_at) + '">' + container[twitterlib].time.relative(tweet.created_at) + '</span></a>';
     if (tweet.source) html += ' <span>from ' + tweet.source + '</span>';
     if (tweet.retweetedby) html += ' <span>retweeted by ' + tweet.retweetedby.screen_name + '</span>';
     html += '</span></div></div></li>';
@@ -494,11 +525,18 @@
       } // else we won't do anything
       return this;
     },
+    refresh: function () { // same as hitting again
+      if (last.method) {
+        this[last.method](last.arg, last.options, last.callback);
+      } // else we won't do anything
+      return this;
+    },
     
     // appending on pre-existing utilities
     time: time,
     ify: ify,
     filter: filter,
+    expandLinks: expandLinks,
     cancel: function () {
       for (var k in outstanding) {
         window[k] = (function () { return function (guid) { clean(guid); };})(k.replace(twitterlib, ''));

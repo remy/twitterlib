@@ -70,7 +70,11 @@ input.debug { width: 300px; }
         <input type="text" value="" id="term" />
       </div>
     </fieldset>
-    <div class="execute"><input type="submit" value="execute &rarr;" /> <input type="button" class="next" value="next &rArr;" /></div>
+    <div class="execute">
+      <input type="submit" value="execute &rarr;" />
+      <input type="button" class="refresh" value="refresh &bull;" />
+      <input type="button" class="next" value="next &rArr;" />
+    </div>
     <fieldset>
       <legend>Options</legend>
       <div>
@@ -90,7 +94,11 @@ input.debug { width: 300px; }
         <input type="checkbox" value="true" id="include_rts">
       </div>
     </fieldset>
-    <div class="execute"><input type="submit" value="execute &rarr;" /> <input type="button" class="next" value="next &rArr;" /></div>
+    <div class="execute">
+      <input type="submit" value="execute &rarr;" />
+      <input type="button" class="refresh" value="refresh &bull;" />
+      <input type="button" class="next" value="next &rArr;" />
+    </div>
     <fieldset>
       <legend>Debug URLs</legend>
       <div>
@@ -106,7 +114,11 @@ input.debug { width: 300px; }
         <label for="debug-search">search</label><input type="text" value="test-data/search%page%.json?callback=callback" class="debug" id="debug-search" />
       </div>
     </fieldset>
-    <div class="execute"><input type="submit" value="execute &rarr;" /> <input type="button" class="next" value="next &rArr;" /></div>
+    <div class="execute">
+      <input type="submit" value="execute &rarr;" />
+      <input type="button" class="refresh" value="refresh &bull;" />
+      <input type="button" class="next" value="next &rArr;" />
+    </div>
   </form>
 </div>
 </div>
@@ -184,7 +196,7 @@ $('form').onsubmit = function (event) {
     if (options.limit) {
       optionText.push('limit: ' + options.limit);
     }
-    console.log(options);
+
     if (options.rts) {
       optionText.push('rts: ' + options.rts);
     }
@@ -213,6 +225,15 @@ $$('input.next').forEach(function (el) {
     return false;
   };
 });
+
+$$('input.refresh').forEach(function (el) {
+  el.onclick = function () {
+    twitterlib.refresh();
+    
+    return false;
+  };
+});
+
 
 // for this to work, it needs to be served from a url, rather than as a file
 if (window.localStorage && Array.prototype.forEach) {
