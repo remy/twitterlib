@@ -174,26 +174,35 @@
   var filter = (function () {
     return {
       match: function (tweet, search, includeHighlighted) {
-        var i = 0, s = '', text = tweet.text.toLowerCase();
+        var i = 0, s = '', text = tweet.text.toLowerCase(),
+            notonly = (!search['and'] || !search['and'].length) && (!search['or'] || !search['or'].length);
 
         if (typeof search == "string") {
           search = this.format(search);
         }
-
+        
         // loop ignore first
-        if (search['not'].length) {
+        if (search['not'] && search['not'].length) {
           for (i = 0; i < search['not'].length; i++) {
             if (text.indexOf(search['not'][i]) !== -1) {
               return false;
             }
           }
 
-          if (!search['and'].length && !search['or'].length) {
+          if (notonly) {
+            return true;
+          }
+        } else if (typeof search['not'] == 'function') {
+          if (search['not'].test(text)) {
+            return false;
+          }
+
+          if (notonly) {
             return true;
           }
         }
 
-        if (search['and'].length) {
+        if (search['and'] && search['and'].length) {
           for (i = 0; i < search['and'].length; i++) {
             s = search['and'][i];
 
@@ -209,9 +218,13 @@
               return false;
             }
           }
+        } else if (typeof search['and'] == 'function') {
+          if (search['and'].test(text)) {
+            return true;
+          }
         }
 
-        if (search['or'].length) {
+        if (search['or'] && search['or'].length) {
           for (i = 0; i < search['or'].length; i++) {
             s = search['or'][i];
 
@@ -227,7 +240,11 @@
               return true;
             }
           }
-        } else if (search['and'].length) {
+        } else if (typeof search['or'] == 'function') {
+          if (search['or'].test(text)) {
+            return true;
+          }
+        } else if (search['and'] && search['and'].length) {
           return true;
         }
 
