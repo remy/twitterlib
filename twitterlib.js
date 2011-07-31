@@ -51,6 +51,8 @@
   }();
   
   var expandLinks = function (tweet) {
+    if (tweet === undefined) return '';
+    
     var text = tweet.text,
         i = 0;
     if (tweet.entities) {
@@ -192,7 +194,7 @@
           if (notonly) {
             return true;
           }
-        } else if (typeof search['not'] == 'function') {
+        } else if (({}).toString.call(search['not']) !== '[object Array]') {
           if (search['not'].test(text)) {
             return false;
           }
