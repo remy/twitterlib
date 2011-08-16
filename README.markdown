@@ -19,6 +19,7 @@ Note that the twitterlib library returns itself in all the API methods (and the 
 * search - calls a search request (limited by Twitter to 10 days), with all the result fields normalised to match the "twitter API"
 * status - single status for a user, result is in an array
 * timeline - timeline for a user
+* retweets - retweets by a particular user
 
 ### Options
 
