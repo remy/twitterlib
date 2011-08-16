@@ -10,7 +10,7 @@ Live example of this library being used in anger is the [Full Frontal JavaScript
 
 All API methods are called with:
 
-<pre><code>twitterlib[METHOD](subject, options, callback)</code></pre>
+    twitterlib[METHOD](subject, options, callback)
 
 Note that the twitterlib library returns itself in all the API methods (and the <code>next</code> method) so you can chain calls.
 
@@ -35,14 +35,14 @@ The context of the callback is set to the twitterlib library (so logging out <co
 
 The second argument to the callback is the options being used on the method call.
 
-<pre><code>twitterlib.timeline('rem', { filter: 'snapbird OR "snap bird"' }, function (tweets, options) {
-  document.querySelector('#tweet').innerHTML = twitterlib.render(tweets[0]);
-  alert('This is page ' + options.page + ', using filter: ' + options.filter);
-  
-  if (options.page == 1) {
-    this.next(); // repeats the call
-  }
-});</code></pre>
+    twitterlib.timeline('rem', { filter: 'snapbird OR "snap bird"' }, function (tweets, options) {
+      document.querySelector('#tweet').innerHTML = twitterlib.render(tweets[0]);
+      alert('This is page ' + options.page + ', using filter: ' + options.filter);
+
+      if (options.page == 1) {
+        this.next(); // repeats the call
+      }
+    });
 
 
 ## Utility Methods:
@@ -58,17 +58,17 @@ The second argument to the callback is the options being used on the method call
 
 ## Example
 
-<pre><code>var count = 0, limit = 2;
-twitterlib.timeline('rem', { limit: 5 }, function (tweets) {
-  for (var i = 0; i < tweets.length; i++) {
-    console.log(this.ify.clean(tweets[i].text));
-  }
+    var count = 0, limit = 2;
+    twitterlib.timeline('rem', { limit: 5 }, function (tweets) {
+      for (var i = 0; i < tweets.length; i++) {
+        console.log(this.ify.clean(tweets[i].text));
+      }
 
-  count++;
-  if (count < limit) {
-    this.next();
-  }
-});</code></pre>
+      count++;
+      if (count < limit) {
+        this.next();
+      }
+    });
 
 ## Debugging
 
@@ -80,26 +80,26 @@ For example, this repository includes some test data in the <code>test</code> di
 
 Within the files the result is being passed to a predefined callback called <code>callback</code>, i.e. 
 
-<pre><code><strong>callback</strong>({"results":[{"profile_image_url":"http://a3.twimg.com/profile_images/.....</code></pre>
+    <strong>callback</strong>({"results":[{"profile_image_url":"http://a3.twimg.com/profile_images/.....
 
 Note that the number in the filename match the page numbers, so this can be a variable in our debug URL.
 
 To override the <code>search</code> call with our own predefined data (as seen the <code>test/api.html</code> example), I use:
 
-<pre><code>twitterlib.debug({ search: 'test-data/search%page%.json?callback=callback' });</code></pre>
+    twitterlib.debug({ search: 'test-data/search%page%.json?callback=callback' });
 
 Now search method calls will return search1.json for the first page, then search2.json for the second page, and so on.
 
 To change another method, I can call the <code>debug</code> method again, or I can do it all at once:
 
-<pre><code>twitterlib.debug({ 
-  search: 'test-data/search%page%.json?callback=callback',
-  list: 'test-data/list%page%.json?callback=callback' 
-});</code></pre>
+    twitterlib.debug({ 
+      search: 'test-data/search%page%.json?callback=callback',
+      list: 'test-data/list%page%.json?callback=callback' 
+    });
 
 If I've finished debugging and need to switch from debug mode to live mode during runtime (this is unlikely during production, but perhaps useful during development), you call the <code>reset</code> method:
 
-<pre><code>twitterlib.reset();</code></pre>
+    twitterlib.reset();
 
 
 
