@@ -15,7 +15,7 @@
       URLS = {
         search: 'http://search.twitter.com/search.json?q=%search%&page=%page|1%&rpp=%limit|100%&since_id=%since|remove%&result_type=recent', // TODO allow user to change result_type
         timeline: 'http://api.twitter.com/1/statuses/user_timeline.json?screen_name=%user%&count=%limit|200%&page=%page|1%&since_id=%since|remove%include_rts=%rts|false%&include_entities=true',
-        list: 'http://api.twitter.com/1/%user%/lists/%list%/statuses.json?page=%page|1%&per_page=%limit|200%&since_id=%since|remove%&include_entities=true&include_rts=%rts|false',
+        list: 'http://api.twitter.com/1/%user%/lists/%list%/statuses.json?page=%page|1%&per_page=%limit|200%&since_id=%since|remove%&include_entities=true&include_rts=%rts|false%',
         favs: 'http://api.twitter.com/1/favorites/%user%.json?page=%page|1%include_entities=true&skip_status=true',
         retweets: 'http://api.twitter.com/1/statuses/retweeted_by_user.json?screen_name=%user%&count=%limit|200%&since_id=%since|remove%&page=%page|1%'
       },
