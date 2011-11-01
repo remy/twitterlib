@@ -184,6 +184,7 @@ $('form').onsubmit = function (event) {
 
   twitterlib[method](term, opt, function (data, options) {
     var html = '<code>twitterlib.' + method + '("' + term + '"';
+
     
     var optionText = [];
     if (options.filter) {
@@ -211,6 +212,7 @@ $('form').onsubmit = function (event) {
 
     var html = [];
     for (var i = 0; i < data.length; i++) {
+      console.log(data[i]);
       html.push(twitterlib.render(data[i]));
     }
     $('#tweets').innerHTML = html.join('');
