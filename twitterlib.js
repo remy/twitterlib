@@ -10,6 +10,9 @@
         http = require('http');
 
     this.document = {
+      location: {
+        protocol: 'http:'
+      },
       head: {
         appendChild: function (element) {
           if (!element.src) return; // exit if we're not a script
@@ -17,17 +20,14 @@
           var urldata = urlparse(element.src, true),
               request = http.createClient(80, urldata.host).request('GET', urldata.pathname + urldata.search, { host: urldata.host }),
               json = '';
-          console.log(urldata);
           var callback = window[urldata.query.callback];
-          
-          request.end();
-          request.on('response', function (response) {
-            response.setEncoding('utf8');
-            response.addListener('data', function(chunk) { 
+
+          request.on('response', function (res) {
+            res.setEncoding('utf8');
+            res.on('data', function(chunk) { 
               json += chunk; 
-            });
-            response.addListener('end', function() {
-              switch (response.statusCode) {
+            }).on('end', function() {
+              switch (res.statusCode) {
               case 200:
                 json = json.replace(new RegExp('^' + urldata.query.callback + '\\('), '').replace(/\);*$/, '');
 
@@ -40,7 +40,7 @@
                 break;
               };
             });
-          });
+          }).end();
         }
       },
       getElementById: function () {},
@@ -66,12 +66,13 @@
         '&lt;': '<',
         '&gt;': '>'
       },
+      protocol = document.location.protocol,
       URLS = {
-        search: 'http://search.twitter.com/search.json?q=%search%&page=%page|1%&rpp=%limit|100%&since_id=%since|remove%&result_type=recent&include_entities=true', // TODO allow user to change result_type
-        timeline: 'http://api.twitter.com/1/statuses/user_timeline.json?screen_name=%user%&count=%limit|200%&page=%page|1%&since_id=%since|remove%include_rts=%rts|false%&include_entities=true',
-        list: 'http://api.twitter.com/1/%user%/lists/%list%/statuses.json?page=%page|1%&per_page=%limit|200%&since_id=%since|remove%&include_entities=true&include_rts=%rts|false%',
-        favs: 'http://api.twitter.com/1/favorites/%user%.json?page=%page|1%include_entities=true&skip_status=true',
-        retweets: 'http://api.twitter.com/1/statuses/retweeted_by_user.json?screen_name=%user%&count=%limit|200%&since_id=%since|remove%&page=%page|1%'
+        search: protocol + '//search.twitter.com/search.json?q=%search%&page=%page|1%&rpp=%limit|100%&since_id=%since|remove%&result_type=recent&include_entities=true', // TODO allow user to change result_type
+        timeline: protocol + '//api.twitter.com/1/statuses/user_timeline.json?screen_name=%user%&count=%limit|200%&page=%page|1%&since_id=%since|remove%include_rts=%rts|false%&include_entities=true',
+        list: protocol + '//api.twitter.com/1/%user%/lists/%list%/statuses.json?page=%page|1%&per_page=%limit|200%&since_id=%since|remove%&include_entities=true&include_rts=%rts|false%',
+        favs: protocol + '//api.twitter.com/1/favorites/%user%.json?page=%page|1%include_entities=true&skip_status=true',
+        retweets: protocol + '//api.twitter.com/1/statuses/retweeted_by_user.json?screen_name=%user%&count=%limit|200%&since_id=%since|remove%&page=%page|1%'
       },
       urls = URLS, // allows for resetting debugging
       undefined,
@@ -646,7 +647,7 @@
   twitterlib.custom('retweets');
 
   if (typeof exports !== 'undefined') {
-    exports.twitterlib = twitterlib;
+    module.exports = twitterlib;
   } 
   
   global.twitterlib = twitterlib;
