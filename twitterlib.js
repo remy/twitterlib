@@ -1,6 +1,60 @@
 // twitterlib.js (c) 2011 Remy Sharp
-// Licensed under the terms of the MIT license.
-(function (twitterlib, container) {
+// version 1.0.0
+// MIT license: http://rem.mit-license.org
+(function (global) {
+  var twitterlib = {};
+
+  // for Node.js - a quasi document polyfill
+  if (typeof exports !== 'undefined' && typeof require === 'function') {
+    var urlparse = require('url').parse,
+        http = require('http');
+
+    this.document = {
+      location: {
+        protocol: 'http:'
+      },
+      head: {
+        appendChild: function (element) {
+          if (!element.src) return; // exit if we're not a script
+          // send request
+          var urldata = urlparse(element.src, true),
+              request = http.createClient(80, urldata.host).request('GET', urldata.pathname + urldata.search, { host: urldata.host }),
+              json = '';
+          var callback = window[urldata.query.callback];
+
+          request.on('response', function (res) {
+            res.setEncoding('utf8');
+            res.on('data', function(chunk) { 
+              json += chunk; 
+            }).on('end', function() {
+              switch (res.statusCode) {
+              case 200:
+                json = json.replace(new RegExp('^' + urldata.query.callback + '\\('), '').replace(/\);*$/, '');
+
+                outstanding[urldata.query.callback] && callback(JSON.parse(json));
+                break;
+              case 304:
+                break;
+              case 401:
+                // console.error('not authed');
+                break;
+              };
+            });
+          }).end();
+        }
+      },
+      getElementById: function () {},
+      createElement: function (type) {
+        return {
+          type: type,
+          id: null,
+          src: ''
+        }
+      }
+    };
+  }
+
+
   var guid = +new Date,
       window = this,
       document = window.document,
@@ -12,12 +66,13 @@
         '&lt;': '<',
         '&gt;': '>'
       },
+      protocol = document.location.protocol.substr(0, 4) == 'http' ? document.location.protocol : 'http:',
       URLS = {
-        search: 'http://search.twitter.com/search.json?q=%search%&page=%page|1%&rpp=%limit|100%&since_id=%since|remove%&result_type=recent', // TODO allow user to change result_type
-        timeline: 'http://api.twitter.com/1/statuses/user_timeline.json?screen_name=%user%&count=%limit|200%&page=%page|1%&since_id=%since|remove%include_rts=%rts|false%&include_entities=true',
-        list: 'http://api.twitter.com/1/%user%/lists/%list%/statuses.json?page=%page|1%&per_page=%limit|200%&since_id=%since|remove%&include_entities=true&include_rts=%rts|false%',
-        favs: 'http://api.twitter.com/1/favorites/%user%.json?page=%page|1%include_entities=true&skip_status=true',
-        retweets: 'http://api.twitter.com/1/statuses/retweeted_by_user.json?screen_name=%user%&count=%limit|200%&since_id=%since|remove%&page=%page|1%'
+        search: protocol + '//search.twitter.com/search.json?q=%search%&page=%page|1%&rpp=%limit|100%&since_id=%since|remove%&result_type=recent&include_entities=true', // TODO allow user to change result_type
+        timeline: protocol + '//api.twitter.com/1/statuses/user_timeline.json?screen_name=%user%&count=%limit|200%&page=%page|1%&since_id=%since|remove%include_rts=%rts|false%&include_entities=true',
+        list: protocol + '//api.twitter.com/1/%user%/lists/%list%/statuses.json?page=%page|1%&per_page=%limit|200%&since_id=%since|remove%&include_entities=true&include_rts=%rts|false%',
+        favs: protocol + '//api.twitter.com/1/favorites/%user%.json?page=%page|1%include_entities=true&skip_status=true',
+        retweets: protocol + '//api.twitter.com/1/statuses/retweeted_by_user.json?screen_name=%user%&count=%limit|200%&since_id=%since|remove%&page=%page|1%'
       },
       urls = URLS, // allows for resetting debugging
       undefined,
@@ -318,10 +373,10 @@
     html += tweet.user.screen_name + '" ';
     html += 'title="' + tweet.user.name + '">' + tweet.user.screen_name + '</a></strong> ';
     html += '<span class="entry-content">';
-    html += container[twitterlib].ify.clean(container[twitterlib].expandLinks(tweet));
+    html += twitterlib.ify.clean(twitterlib.expandLinks(tweet));
     html += '</span> <span class="meta entry-meta"><a href="http://twitter.com/' + tweet.user.screen_name;
     html += '/status/' + tweet.id_str + '" class="entry-date" rel="bookmark"><span class="published" title="';
-    html += container[twitterlib].time.datetime(tweet.created_at) + '">' + container[twitterlib].time.relative(tweet.created_at) + '</span></a>';
+    html += twitterlib.time.datetime(tweet.created_at) + '">' + twitterlib.time.relative(tweet.created_at) + '</span></a>';
     if (tweet.source) html += ' <span>from ' + tweet.source + '</span>';
     if (tweet.retweetedby) html += ' <span>retweeted by ' + tweet.retweetedby.screen_name + '</span>';
     html += '</span></div></div></li>';
@@ -343,13 +398,11 @@
     var script = document.createElement('script'), match = null;
     if (options == undefined) options = {};
     guid++;
-    
-    outstanding[twitterlib + guid] = true;
-    window[twitterlib + guid] = (function (guid, options) { // args are now private and static
+    outstanding['twitterlib' + guid] = true;
+    window['twitterlib' + guid] = (function (guid, options) { // args are now private and static
       return function (tweets) {
         // remove original script include
         var i = 0, parts = [];
-        
         if (tweets.results) {
           tweets = tweets.results;
           i = tweets.length;
@@ -357,7 +410,7 @@
           // fix the user prop to match "normal" API calls
           while (i--) {
             tweets[i].user = { id: tweets[i].from_user_id, screen_name: tweets[i].from_user, profile_image_url: tweets[i].profile_image_url };
-            tweets[i].source = container[twitterlib].ify.entities(tweets[i].source);
+            tweets[i].source = twitterlib.ify.entities(tweets[i].source);
             
             // fix created_at
             parts = tweets[i].created_at.split(' ');
@@ -394,9 +447,9 @@
         
         if (caching && options.page > 1) {
           try {
-            sessionStorage.setItem(twitterlib + '.page' + options.page + '.tweets', JSON.stringify(tweets));
-            sessionStorage.setItem(twitterlib + '.page' + options.page + '.originalTweets', JSON.stringify(options.originalTweets));            
-            sessionStorage.setItem(twitterlib + '.page' + options.page, 'true');
+            sessionStorage.setItem('twitterlib.page' + options.page + '.tweets', JSON.stringify(tweets));
+            sessionStorage.setItem('twitterlib.page' + options.page + '.originalTweets', JSON.stringify(options.originalTweets));            
+            sessionStorage.setItem('twitterlib.page' + options.page, 'true');
           } catch (e) {
             // possible QUOTA EXCEEDED
           }
@@ -404,7 +457,7 @@
         
         options.cached = false;
         
-        callback.call(container[twitterlib], tweets, options);
+        callback.call(twitterlib, tweets, options);
         // clean up
         clean(guid);
       };
@@ -412,23 +465,23 @@
     
     match = url.match(/callback=(.*)/);
     if (match != null && match.length > 1) {
-      window[match[1]] = window[twitterlib + guid];
+      window[match[1]] = window['twitterlib' + guid];
     } else {
-      url += '&callback=' + twitterlib + guid;
+      url += '&callback=' + 'twitterlib' + guid;
     }
 
     // all first requests go via live
-    if (!caching || options.page <= 1 || (caching && sessionStorage.getItem(twitterlib + '.page' + options.page) == null)) {
+    if (!caching || options.page <= 1 || (caching && sessionStorage.getItem('twitterlib.page' + options.page) == null)) {
       script.src = url;
-      script.id = twitterlib + guid;
-      head.appendChild(script);      
+      script.id = 'twitterlib' + guid;
+      head.appendChild(script);
     } else if (caching) {
       clean(guid);
       options.cached = true;
       
-      options.originalTweets = JSON.parse(sessionStorage.getItem(twitterlib + '.page' + options.page + '.originalTweets'));
+      options.originalTweets = JSON.parse(sessionStorage.getItem('twitterlib.page' + options.page + '.originalTweets'));
       // reset the tweets - so we can cache but refilter
-      var tweets = JSON.parse(sessionStorage.getItem(twitterlib + '.page' + options.page + '.tweets') || '[]');
+      var tweets = JSON.parse(sessionStorage.getItem('twitterlib.page' + options.page + '.tweets') || '[]');
       if (options.filter) {
         tweets = filter.matchTweets(tweets, options.filter);
       }
@@ -438,7 +491,7 @@
         tweets = tweets.splice(0, options.limit);
       }
 
-      callback.call(container[twitterlib], tweets, options);
+      callback.call(twitterlib, tweets, options);
     } 
   }
   
@@ -475,12 +528,14 @@
       callback: options.callback,
       page: options.page || 1
     };
+
+    options.method = method;
     
     if (caching) {
-      var last_request = JSON.parse(sessionStorage.getItem(twitterlib + '.last_request') || '{}');
+      var last_request = JSON.parse(sessionStorage.getItem('twitterlib.last_request') || '{}');
       if (last.method != last_request.method || last.arg != last_request.arg) {
         clearCache();
-        sessionStorage.setItem(twitterlib + '.last_request', JSON.stringify(last));
+        sessionStorage.setItem('twitterlib.last_request', JSON.stringify(last));
       } 
     }
   }
@@ -488,7 +543,7 @@
   function clearCache() {
     var i = sessionStorage.length;
     while (i--) {
-      if (sessionStorage.key(i).substr(0, twitterlib.length) == twitterlib) {
+      if (sessionStorage.key(i).substr(0, 'twitterlib'.length) == 'twitterlib') {
         sessionStorage.removeItem(sessionStorage.key(i));
       }
     }
@@ -520,7 +575,7 @@
     return this[name];
   }
   
-  container[twitterlib] = {
+  twitterlib = {
     // search is an exception case
     custom: custom,
     status: function (user, options, callback) { // alias function
@@ -560,7 +615,7 @@
     expandLinks: expandLinks,
     cancel: function () {
       for (var k in outstanding) {
-        window[k] = (function () { return function (guid) { clean(guid); };})(k.replace(twitterlib, ''));
+        window[k] = (function () { return function (guid) { clean(guid); };})(k.replace('twitterlib', ''));
       }
       outstanding = {};
       return this;
@@ -586,8 +641,14 @@
     }
   };
   
-  container[twitterlib].custom('search');
-  container[twitterlib].custom('timeline');
-  container[twitterlib].custom('favs');
-  container[twitterlib].custom('retweets');
-})('twitterlib', this);
+  twitterlib.custom('search');
+  twitterlib.custom('timeline');
+  twitterlib.custom('favs');
+  twitterlib.custom('retweets');
+
+  if (typeof exports !== 'undefined') {
+    module.exports = twitterlib;
+  } 
+  
+  global.twitterlib = twitterlib;
+})(this);
