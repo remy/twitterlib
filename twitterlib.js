@@ -92,7 +92,7 @@
       },
       at: function(t) {
         return t.replace(/(^|[^\w]+)\@([a-zA-Z0-9_]{1,15}(\/[a-zA-Z0-9-_]+)*)/g, function(m, m1, m2) {
-          return m1 + '@<a href="http://twitter.com/' + m2 + '">' + m2 + '</a>';
+          return m1 + '<a href="http://twitter.com/' + m2 + '">@' + m2 + '</a>';
         });
       },
       hash: function(t) {
