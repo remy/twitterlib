@@ -1,5 +1,5 @@
 // twitterlib.js (c) 2011 Remy Sharp
-// @version 1.0.5b / Mon Jan 9 23:38:20 2012 +0000
+// @version 1.0.6 / Wed Jan 25 12:58:08 2012 +0000
 // MIT license: http://rem.mit-license.org
 (function (global) {
   var twitterlib = {};
