@@ -1,5 +1,5 @@
 // twitterlib.js (c) 2011 Remy Sharp
-// @version 1.0.6 / Wed Jan 25 12:58:08 2012 +0000
+// @version 1.0.7 / Wed Jan 25 12:58:19 2012 +0000
 // MIT license: http://rem.mit-license.org
 (function (global) {
   var twitterlib = {};
@@ -71,8 +71,8 @@
         search: protocol + '//search.twitter.com/search.json?q=%search%&page=%page|1%&rpp=%limit|100%&since_id=%since|remove%&result_type=recent&include_entities=true', // TODO allow user to change result_type
         timeline: protocol + '//api.twitter.com/1/statuses/user_timeline.json?screen_name=%user%&count=%limit|200%&page=%page|1%&since_id=%since|remove%include_rts=%rts|false%&include_entities=true',
         list: protocol + '//api.twitter.com/1/%user%/lists/%list%/statuses.json?page=%page|1%&per_page=%limit|200%&since_id=%since|remove%&include_entities=true&include_rts=%rts|false%',
-        favs: protocol + '//api.twitter.com/1/favorites/%user%.json?page=%page|1%include_entities=true&skip_status=true&since_id=%since|remove%',
-        retweets: protocol + '//api.twitter.com/1/statuses/retweeted_by_user.json?screen_name=%user%&count=%limit|200%&since_id=%since|remove%&page=%page|1%'
+        favs: protocol + '//api.twitter.com/1/favorites/%user%.json?page=%page|1%&include_entities=true&skip_status=true&since_id=%since|remove%',
+        retweets: protocol + '//api.twitter.com/1/statuses/retweeted_by_user.json?screen_name=%user%&include_entities=true&count=%limit|200%&since_id=%since|remove%&page=%page|1%'
       },
       urls = URLS, // allows for resetting debugging
       undefined,
