@@ -1,7 +1,7 @@
 {
   "name": "twitterlib",
   "main": "twitterlib.js",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Library for doing all things Twitter API related, with added sauce for filtering, paging and paging",
   "homepage": "https://github.com/remy/twitterlib/",
   "keywords": [
