@@ -368,12 +368,12 @@
   // based on twitter.com list of tweets, most common format for tweets
   function render(tweet) {
     var html = '<li><div class="tweet">';
-    html += '<div class="vcard"><a href="http://twitter.com/' + tweet.user.screen_name + '" class="url"><img style="height: 48px; width: 48px;" alt="' + tweet.user.name + '" class="photo fn" height="48" src="' + tweet.user.profile_image_url + '" width="48" /></a></div>';  
+    html += '<div class="vcard"><a href="http://twitter.com/' + tweet.user.screen_name + '" class="url"><img style="height: 48px; width: 48px;" alt="' + tweet.user.name + '" class="photo fn" height="48" src="' + tweet.user.profile_image_url + '" width="48" /></a></div>';
     html += '<div class="hentry"><strong><a href="http://twitter.com/';
     html += tweet.user.screen_name + '" ';
     html += 'title="' + tweet.user.name + '">' + tweet.user.screen_name + '</a></strong> ';
     html += '<span class="entry-content">';
-    html += twitterlib.ify.clean(twitterlib.expandLinks(tweet));
+    html += twitterlib.ify.clean(tweet.text); //twitterlib.expandLinks(tweet));
     html += '</span> <span class="meta entry-meta"><a href="http://twitter.com/' + tweet.user.screen_name;
     html += '/status/' + tweet.id_str + '" class="entry-date" rel="bookmark"><span class="published" title="';
     html += twitterlib.time.datetime(tweet.created_at) + '">' + twitterlib.time.relative(tweet.created_at) + '</span></a>';
@@ -390,7 +390,7 @@
       head.removeChild(document.getElementById(twitterlib + guid));
     }
     delete outstanding[twitterlib + guid];
-    window[twitterlib + guid] = undefined; 
+    window[twitterlib + guid] = undefined;
     try{ delete window[ twitterlib + guid ]; } catch(e){}
   }
     
@@ -403,6 +403,14 @@
       return function (tweets) {
         // remove original script include
         var i = 0, parts = [];
+
+        // let's expand the urls by default
+        i = tweets.length;
+        while (i--) {
+          tweets[i].originalText = tweets[i].text;
+          tweets[i].text = expandLinks(tweets[i]);
+        }
+
         if (tweets.results) {
           tweets = tweets.results;
           i = tweets.length;
@@ -432,7 +440,6 @@
               tweets[i] = tweets[i].retweeted_status;
             }
           }
-          
         }
         
         options.originalTweets = tweets;
