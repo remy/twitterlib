@@ -1,4 +1,6 @@
-var twitterlib = require('twitterlib');
+var twitterlib = require('../twitterlib');
+
+console.log(twitterlib.version);
 
 twitterlib.favs('rem', function (tweets) {
   // console.log(tweets[0]);

@@ -1,5 +1,5 @@
 // twitterlib.js (c) 2011 Remy Sharp
-// @version 1.0.8 / Sun Feb 19 22:37:22 2012 +0000
+// @version 1.0.9 / Sun Feb 19 23:05:25 2012 +0000
 // MIT license: http://rem.mit-license.org
 (function (global) {
   var twitterlib = {};
@@ -18,14 +18,14 @@
           if (!element.src) return; // exit if we're not a script
           // send request
           var urldata = urlparse(element.src, true),
-              request = http.createClient(80, urldata.host).request('GET', urldata.pathname + urldata.search, { host: urldata.host }),
+              request = http.request(urldata),
               json = '';
           var callback = window[urldata.query.callback];
 
           request.on('response', function (res) {
             res.setEncoding('utf8');
-            res.on('data', function(chunk) { 
-              json += chunk; 
+            res.on('data', function(chunk) {
+              json += chunk;
             }).on('end', function() {
               switch (res.statusCode) {
               case 200:
@@ -38,7 +38,7 @@
               case 401:
                 // console.error('not authed');
                 break;
-              };
+              }
             });
           }).end();
         }
@@ -49,7 +49,7 @@
           type: type,
           id: null,
           src: ''
-        }
+        };
       }
     };
   }
@@ -66,7 +66,7 @@
         '&lt;': '<',
         '&gt;': '>'
       },
-      protocol = document.location.protocol.substr(0, 4) == 'http' ? document.location.protocol : 'http:',
+      protocol = document.location.protocol.substr(0, 4) === 'http' ? document.location.protocol : 'http:',
       URLS = {
         search: protocol + '//search.twitter.com/search.json?q=%search%&page=%page|1%&rpp=%limit|100%&since_id=%since|remove%&result_type=recent&include_entities=true', // TODO allow user to change result_type
         timeline: protocol + '//api.twitter.com/1/statuses/user_timeline.json?screen_name=%user%&count=%limit|200%&page=%page|1%&since_id=%since|remove%include_rts=%rts|false%&include_entities=true',
@@ -576,6 +576,7 @@
   }
   
   twitterlib = {
+    version: '1.0.9', //@version 1.0.9 / Sun Feb 19 23:05:25 2012 +0000
     // search is an exception case
     custom: custom,
     status: function (user, options, callback) { // alias function
