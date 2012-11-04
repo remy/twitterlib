@@ -1,0 +1,159 @@
+#!/usr/bin/env node
+
+/*jshint node:true */
+"use strict";
+var twitterlib = require('../twitterlib'), // npm install twitterlib
+    program = require('commander'),
+    terminal = require('node-terminal'),
+    terminalTimer = null,
+    config = require('./config'),
+    totalSearched = 0,
+    state = 0,
+    offset = 0,
+    total = 0,
+    timer = null,
+    pageMax = null;
+
+function consoleify(str) {
+  var replace = {
+    '&gt;': '>',
+    '&lt;': '<',
+    '&amp;': '&'
+  };
+  
+  return str.replace(/(&gt;|&lt;&amp;)/g, function (all, m) {
+    return replace[m];
+  });
+}
+
+function startSpinner() {
+  terminalTimer = setInterval(function() {
+    terminal.left(1).write(['|', '/', '-', '\\'].splice(state, 1).pop());
+    
+    if (++state >= 4) {
+      state = 0;
+    }
+  }, 500);
+}
+
+function search() {
+  var term = program.args.join(' ');
+  terminal.write('Searching ' + program.user + ' for ' + term + '...  ');
+  startSpinner();
+
+  twitterlib[program.method](program.user, { filter: term, rts: true }, function (data, options) {
+    totalSearched += options.originalTweets.length;
+
+    clearInterval(terminalTimer);
+    if (totalSearched) { offset = (totalSearched+'').length; }
+    terminal.left(1 + offset).write(totalSearched + '... ');
+
+    if (data.length === 0 && total === 0 && options.originalTweets.length > 0) {
+      // check if we're doing a page max
+      startSpinner();
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        twitterlib.next();
+      }, 500);
+      return;
+    } else if (total > 0 && data.length === 0 && options.originalTweets.length > 0 && pageMax > 0) {
+      pageMax--;
+      startSpinner();
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        twitterlib.next();
+      }, 500);
+      return;
+    }
+
+    // console.log(terminal);
+
+    terminal.left(100).clearLine().write('Searched ' + totalSearched).nl();
+    data.forEach(function (tweet) {
+      terminal.color('green').write('@' + tweet.user.screen_name + ': ' + consoleify(tweet.text)).nl();
+      terminal.color('black').write('http://twitter.com/' + tweet.user.screen_name + '/status/' + tweet.id_str + ' @ ' + tweet.created_at).reset().nl();
+        // http://twitter.com/%s/status/%s @ %s", , tweet.user.screen_name, tweet.id_str, tweet.created_at);
+    });
+
+    total += data.length;
+    pageMax = null;
+
+    terminal.nl();
+    program.confirm('Continue searching? ', function (ok) {
+      if (ok) {
+        terminal.write('Searching...  ');
+        startSpinner();
+        twitterlib.next();
+      } else {
+        process.exit();
+      }
+    });
+  });
+}
+
+function setup(runsearch) {
+  var fs = require('fs'),
+      path = require('path');
+
+  program.prompt('default twitter username [currently ' + config.user + ']: ', function (user) {
+    config.user = user;
+    if (!program.user) {
+      program.user = user;
+    }
+    console.log('select a default search method [currently ' + config.method + ']: ');
+
+    var methods = ['timeline', 'favs', 'search'];
+    program.choose(methods, function (i) {
+      config.method = methods[i];
+      if (!program.method) {
+        program.method = methods[i];
+      }
+
+      process.stdin.destroy();
+      fs.realpath(__filename, function(error, script) {
+        fs.writeFile(path.join(path.dirname(script), '/config.js'), 'module.exports = ' + JSON.stringify(config) + ';', function (err) {
+          if (err) {
+            console.error('Failed to save config, ', err);
+          } else if (runsearch) {
+            search();
+          }
+        });
+      });
+    });
+  });
+}
+
+program.version(require('../package').version);
+
+// program.option('-b, --back <time>', 'Search further back than the last stored message. Time values as 1d, 1w, 1y', function (time) {
+
+// });
+
+// program.option('-l, --list', 'List out all the achieved favorites', function () {
+
+// });
+  
+// program.option('-w, --web [port]', 'Run Mine as a web server and allow you to browse your favorites (defaults to port 3000)', '3000', function (port) {
+
+// });
+
+program.option('-u, --user <screen name>', 'Search a specific user\'s timeline', config.user);
+program.option('-m, --method <type>', 'Which twitter api to use (timeline|favs|search)', config.method);
+
+program.option('-c, --config', 'Set the defaults for your tweets command');
+
+program.parse(process.argv);
+
+if (program.config) {
+  setup();
+} else if (program.args.length === 0) {
+  program.help();
+  process.exit();
+} else if (!config.user) {
+  console.log('First time run requires defaults set - this can be configured again later with `tweets --config`');
+  setup(true);
+} else {
+  search();
+  // terminal.write('Hello world').nl().color('black').write('This is remy');
+}
+
