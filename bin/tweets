@@ -75,6 +75,10 @@ function search() {
         // http://twitter.com/%s/status/%s @ %s", , tweet.user.screen_name, tweet.id_str, tweet.created_at);
     });
 
+    if (program.dump) {
+      terminal.write(JSON.stringify(data, null, 2));
+    }
+
     total += data.length;
     pageMax = null;
 
@@ -137,6 +141,7 @@ program.version(require('../package').version);
 
 // });
 
+program.option('-d, --dump', 'Debug dump of the JSON object for matched tweets');
 program.option('-u, --user <screen name>', 'Search a specific user\'s timeline', config.user);
 program.option('-m, --method <type>', 'Which twitter api to use (timeline|favs|search)', config.method);
 
