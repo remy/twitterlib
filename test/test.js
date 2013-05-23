@@ -10,9 +10,16 @@ t.test('access tokens', function (t) {
   });
 
   t.test('are added to getUrl', function (t) {
-    twitterlib.setAccessToken('abc123');
+    twitterlib.setAccessToken('xyz234');
     var url = twitterlib.getUrl('search');
-    t.ok(url.indexOf('access_token=abc123') > -1, 'URL contains access token');
+    t.ok(url.indexOf('access_token=xyz234') > -1, 'URL contains access token');
+    t.end();
+  });
+
+  t.test('are not added to getUrl when falsey', function (t) {
+    twitterlib.setAccessToken(null);
+    var url = twitterlib.getUrl('search');
+    t.ok(url.indexOf('access_token') == -1, 'URL does not contain access token');
     t.end();
   });
 

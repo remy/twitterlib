@@ -511,7 +511,7 @@
       }
       var val = key == 'limit' ? options[key] + 10 : options[key];
       return q + (options[key] === undefined && def !== undefined ? def.substr(1) : val);
-    }) + (this.accessToken ? '&access_token=' + this.accessToken : '');
+    }) + (!!this.accessToken ? '&access_token=' + this.accessToken : '');
   }
 
   function normaliseArgs(options, callback) {
@@ -650,7 +650,7 @@
       }
     },
     setAccessToken: function (token) {
-      this.accessToken = '' + token;
+      this.accessToken = token;
       return this;
     }
   };
