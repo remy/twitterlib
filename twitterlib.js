@@ -503,6 +503,7 @@
   }
 
   function getUrl(type, options) {
+    options = options || {};
     return urls[type].replace(/(\b.*?)%(.*?)(\|.*?)?%/g, function (a, q, key, def) {
       // remove empty values that shouldn't be sent
       if (def && def.substr(1) == 'remove' && options[key] == undefined) {
@@ -511,7 +512,7 @@
 
       var val = key == 'limit' ? options[key] + 10 : options[key];
       return q + (options[key] === undefined && def !== undefined ? def.substr(1) : val);
-    });
+    }) + (!!this.accessToken ? '&access_token=' + this.accessToken : '');
   }
 
   function normaliseArgs(options, callback) {
@@ -561,7 +562,7 @@
   // create a new method on twitterlib, that hits the given url,
   // i.e. twitterlib.custom('dm', '/proxy.php?page=%page%&type=direct_messages');
   // can now be called using twitterlib.dm('rem', function (t) { });
-  function custom(name, url) {
+  function custom(name, url, defaults) {
     if (url && urls[name] == undefined) urls[name] = url;
     if (this[name] == undefined) {
       this[name] = function (term, options, callback) {
@@ -591,6 +592,7 @@
     version: '1.0.9', //@version 1.0.9 / Sun Feb 19 23:05:25 2012 +0000
     // search is an exception case
     custom: custom,
+    getUrl: getUrl,
     status: function (user, options, callback) { // alias function
       options = normaliseArgs(options, callback);
       options.limit = 1;
@@ -651,6 +653,10 @@
       if (!window.JSON || !window.sessionStorage) {
         caching = false;
       }
+    },
+    setAccessToken: function (token) {
+      this.accessToken = token;
+      return this;
     }
   };
 

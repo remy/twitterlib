@@ -4,23 +4,37 @@
   "version": "1.1.4",
   "description": "Library for doing all things Twitter API related, with added sauce for filtering, paging and paging",
   "homepage": "https://github.com/remy/twitterlib/",
-  "keywords": ["twitter"],
-  "maintainers": [{
-    "name": "Remy Sharp"
-  }],
-  "repositories": [{
-    "type": "git",
-    "url": "https://github.com/remy/twitterlib/" 
-  }],
-  "licenses": [{
-    "type": "MIT",
-    "url": "http://rem.mit-license.org"
-  }],
+  "keywords": [
+    "twitter"
+  ],
+  "maintainers": [
+    {
+      "name": "Remy Sharp"
+    }
+  ],
+  "repositories": [
+    {
+      "type": "git",
+      "url": "https://github.com/remy/twitterlib/"
+    }
+  ],
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://rem.mit-license.org"
+    }
+  ],
   "dependencies": {
     "commander": "1.x.x",
     "node-terminal": "0.1.x"
   },
   "bin": {
     "tweets": "./bin/tweets"
+  },
+  "scripts": {
+    "test": "tap ./test/test.js"
+  },
+  "devDependencies": {
+    "tap": "~0.4.3"
   }
 }
